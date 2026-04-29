@@ -1,0 +1,15 @@
+-- שליפת כל הנתונים מכל הטבלאות
+SELECT * FROM TRIP;
+SELECT * FROM ROUTESTOP;
+SELECT * FROM BUS;
+SELECT * FROM DRIVER;
+SELECT * FROM ROUTE;
+SELECT * FROM STOP;
+
+-- ספירת כמות הרשומות בכל טבלה
+SELECT 'TRIP' AS table_name, COUNT(*) FROM TRIP;
+SELECT 'ROUTESTOP' AS table_name, COUNT(*) FROM ROUTESTOP;
+SELECT 'BUS' AS table_name, COUNT(*) FROM BUS;
+SELECT 'DRIVER' AS table_name, COUNT(*) FROM DRIVER;
+SELECT 'ROUTE' AS table_name, COUNT(*) FROM ROUTE;
+SELECT 'STOP' AS table_name, COUNT(*) FROM STOP;
