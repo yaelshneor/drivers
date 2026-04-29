@@ -63,7 +63,11 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 ---
 
 ## תרשימי ERD ו-DSD
-נמצאים תחת התיקייה erd-diagram
+
+הקבצים נמצאים בפרויקט תחת תיקייה `erd-diagram`.
+
+* **ERD:** **[erdplus.png](./erd-diagram/erdplus.png)**
+* **DSD:** **[צילום מסך DSD](./erd-diagram/צילום%20מסך%202026-04-28%20221533.png)**
 
 ---
 
@@ -87,9 +91,11 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 ניתן לראות את הקבצים של השאילתות בתוך התקיה scripts
 
 ### 2. ייבוא נתונים מקובץ CSV
-יצרנו קבצי  csv על ידי האתר mockaroo ואז עשינו ייבוא של הקבצים האלו דרך הpgAdmin
 
-יש צילום מסך בתקיה mockdata וגם את הקבצי csv
+יצרנו קבצי CSV בעזרת האתר Mockaroo ואז ייבאנו אותם דרך pgAdmin.
+
+צילום המסך של Mockaroo: **[mockaroo.jpeg](./mockData/mockaroo.jpeg)**  
+קבצי CSV לייבוא: **[MOCK_DATA_bus.csv](./mockData/MOCK_DATA_bus.csv)** · **[MOCK_DATA_driver.csv](./mockData/MOCK_DATA_driver.csv)**
 
 ### 3. הכנסת נתונים באמצעות סקריפט
  יצרנו סקריפט בפיתון שמייצר לנו נתונים בצורה של insert values   ואת הנתונים האלו הרצנו ב PgAdmin 
@@ -98,13 +104,9 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 ## גיבוי ושחזור
 
-### גיבוי נתונים
+### גיבוי ושחזור נתונים
 
-![Backup](screens/backup.png)
-
-### שחזור נתונים
-
-![Restore](screens/restore.png)
+![גיבוי ושחזור נתונים ב-pgAdmin](./backup%26restore/backup%26restore.png)
 
 ---
 
