@@ -54,9 +54,9 @@
 
 סרטון בהדגמת המסכים והממשק שנבנה בעזרת AI:
 
-<video width="100%" controls preload="metadata" src="screens/20260429-0828-44.1746523.mp4"></video>
+<video width="100%" controls preload="metadata" playsinline src="https://raw.githubusercontent.com/yaelshneor/drivers/main/screens/20260429-0828-44.1746523.mp4"></video>
 
-אם הסרטון לא נטען בדפדפן, **[פתיחת קובץ הווידאו במאגר](./screens/20260429-0828-44.1746523.mp4)** או **[כל קבצי המסכים בתיקייה screens](./screens/)**.
+---
 
 ##  קישור למערכת
 
