@@ -54,7 +54,7 @@
 
 סרטון בהדגמת המסכים והממשק שנבנה בעזרת AI:
 
-<video width="100%" controls preload="metadata" playsinline src="screens/20260429-0828-44.1746523.mp4"></video>
+[לחצי כאן לצפייה בסרטון](screens/20260429-0828-44.1746523.mp4)
 
 ---
 
