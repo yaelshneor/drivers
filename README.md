@@ -52,10 +52,11 @@
 
 ## מסכים שנוצרו בעזרת AI
 
-כל המסכים והתמונות שפותחו בעזרת AI נמצאים בפרויקט תחת תיקייה בשם `screens`.  
-**[מעבר לצילומי המסכים בתיקיית screens](./screens/)**
+סרטון בהדגמת המסכים והממשק שנבנה בעזרת AI:
 
----
+<video width="100%" controls preload="metadata" src="screens/20260429-0828-44.1746523.mp4"></video>
+
+אם הסרטון לא נטען בדפדפן, **[פתיחת קובץ הווידאו במאגר](./screens/20260429-0828-44.1746523.mp4)** או **[כל קבצי המסכים בתיקייה screens](./screens/)**.
 
 ##  קישור למערכת
 
@@ -64,10 +65,15 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 ## תרשימי ERD ו-DSD
 
-הקבצים נמצאים בפרויקט תחת תיקייה `erd-diagram`.
+הקבצים המקוריים נמצאים בתיקייה `erd-diagram`.
 
-* **ERD:** **[erdplus.png](./erd-diagram/erdplus.png)**
-* **DSD:** **[צילום מסך DSD](./erd-diagram/צילום%20מסך%202026-04-28%20221533.png)**
+### ERD
+
+![תרשים ישויות והקשרים (ERD)](erd-diagram/erdplus.png)
+
+### DSD
+
+![מבנה נתונים לוגי (DSD)](erd-diagram/צילום%20מסך%202026-04-28%20221533.png)
 
 ---
 
@@ -94,8 +100,11 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 יצרנו קבצי CSV בעזרת האתר Mockaroo ואז ייבאנו אותם דרך pgAdmin.
 
-צילום המסך של Mockaroo: **[mockaroo.jpeg](./mockData/mockaroo.jpeg)**  
-קבצי CSV לייבוא: **[MOCK_DATA_bus.csv](./mockData/MOCK_DATA_bus.csv)** · **[MOCK_DATA_driver.csv](./mockData/MOCK_DATA_driver.csv)**
+**צילום מסך Mockaroo**
+
+![יצירת נתונים ב-Mockaroo](mockData/mockaroo.jpeg)
+
+**קבצי CSV לייבוא:** [`MOCK_DATA_bus.csv`](./mockData/MOCK_DATA_bus.csv), [`MOCK_DATA_driver.csv`](./mockData/MOCK_DATA_driver.csv) (בתיקייה `mockData/`)
 
 ### 3. הכנסת נתונים באמצעות סקריפט
  יצרנו סקריפט בפיתון שמייצר לנו נתונים בצורה של insert values   ואת הנתונים האלו הרצנו ב PgAdmin 
