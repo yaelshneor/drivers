@@ -31,10 +31,10 @@ DB_NAME = os.environ.get("PGDATABASE") or os.environ.get("INSERT_DB") or "postgr
 DB_USER = os.environ.get("PGUSER") or os.environ.get("INSERT_USER") or "postgres"
 DB_PASSWORD = os.environ.get("PGPASSWORD") or os.environ.get("INSERT_PASSWORD") or "postgres"
 
-BUS_LO, BUS_HI = 1201, 2000
-RS_LO, RS_HI = 201, 500
+BUS_LO, BUS_HI = 1001, 1100 #//driver,bus
+RS_LO, RS_HI = 2001, 2001 #//route,stop,routestop,trip
 
-SQL_OUT = Path(__file__).resolve().parent / "generated_inserts.sql"
+SQL_OUT = Path(__file__).resolve().parent / "new_generated_inserts.sql"
 DDL_SQL = Path(__file__).resolve().parent.parent / "scripts" / "create-tables.sql"
 WRITE_SQL_FILE = True
 RUN_DATABASE = True
@@ -154,12 +154,12 @@ def main():
     bus_ids = range(BUS_LO, BUS_HI + 1)
     rs_ids = range(RS_LO, RS_HI + 1)
 
-    bus_rows = [gen_bus(i) for i in bus_ids]
-    driver_rows = [gen_driver(i) for i in bus_ids]
-    route_rows = [gen_route(i) for i in rs_ids]
+    bus_rows = [gen_bus(i) for i in rs_ids]
+    driver_rows = [gen_driver(i) for i in rs_ids]
+    route_rows = [gen_route(i) for i in bus_ids]
     stop_rows = [gen_stop(i, RS_LO) for i in rs_ids]
     rs_rows = [gen_routestop(i, RS_LO) for i in rs_ids]
-    trip_rows = [gen_trip(i) for i in bus_ids]
+    trip_rows = [gen_trip(i) for i in rs_ids]
 
     if WRITE_SQL_FILE:
         SQL_OUT.write_text(
@@ -171,57 +171,57 @@ def main():
     if not RUN_DATABASE:
         return
 
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        connect_timeout=10,
-    )
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT current_database()")
-        print(f"PostgreSQL: db={cur.fetchone()[0]} host={DB_HOST} port={DB_PORT} user={DB_USER}")
-        apply_ddl_if_needed(cur)
-        execute_batch(
-            cur,
-            "INSERT INTO bus (busid, licenseplate, capacity, manufacturer, model, year) VALUES (%s,%s,%s,%s,%s,%s)",
-            bus_rows,
-        )
-        execute_batch(
-            cur,
-            "INSERT INTO driver (driverid, fullname, licensetype) VALUES (%s,%s,%s)",
-            driver_rows,
-        )
-        execute_batch(
-            cur,
-            "INSERT INTO route (routeid, routename, startlocation, endlocation, estimatedduration) VALUES (%s,%s,%s,%s,%s)",
-            route_rows,
-        )
-        execute_batch(
-            cur,
-            "INSERT INTO stop (stopid, stopname, address, latitude, longitude) VALUES (%s,%s,%s,%s,%s)",
-            stop_rows,
-        )
-        execute_batch(
-            cur,
-            "INSERT INTO routestop (stoporder, routeid, stopid) VALUES (%s,%s,%s)",
-            rs_rows,
-        )
-        execute_batch(
-            cur,
-            "INSERT INTO trip (tripid, driverid, routeid, busid) VALUES (%s,%s,%s,%s)",
-            trip_rows,
-        )
-        conn.commit()
-        print("הנתונים הוכנסו ל-PostgreSQL בהצלחה.")
-    except Exception as e:
-        conn.rollback()
-        print(f"שגיאת מסד נתונים: {e}")
-        raise
-    finally:
-        conn.close()
+    # conn = psycopg2.connect(
+    #     host=DB_HOST,
+    #     port=DB_PORT,
+    #     dbname=DB_NAME,
+    #     user=DB_USER,
+    #     password=DB_PASSWORD,
+    #     connect_timeout=10,
+    # )
+    # try:
+    #     cur = conn.cursor()
+    #     cur.execute("SELECT current_database()")
+    #     print(f"PostgreSQL: db={cur.fetchone()[0]} host={DB_HOST} port={DB_PORT} user={DB_USER}")
+    #     apply_ddl_if_needed(cur)
+    #     execute_batch(
+    #         cur,
+    #         "INSERT INTO bus (busid, licenseplate, capacity, manufacturer, model, year) VALUES (%s,%s,%s,%s,%s,%s)",
+    #         bus_rows,
+    #     )
+    #     execute_batch(
+    #         cur,
+    #         "INSERT INTO driver (driverid, fullname, licensetype) VALUES (%s,%s,%s)",
+    #         driver_rows,
+    #     )
+    #     execute_batch(
+    #         cur,
+    #         "INSERT INTO route (routeid, routename, startlocation, endlocation, estimatedduration) VALUES (%s,%s,%s,%s,%s)",
+    #         route_rows,
+    #     )
+    #     execute_batch(
+    #         cur,
+    #         "INSERT INTO stop (stopid, stopname, address, latitude, longitude) VALUES (%s,%s,%s,%s,%s)",
+    #         stop_rows,
+    #     )
+    #     execute_batch(
+    #         cur,
+    #         "INSERT INTO routestop (stoporder, routeid, stopid) VALUES (%s,%s,%s)",
+    #         rs_rows,
+    #     )
+    #     execute_batch(
+    #         cur,
+    #         "INSERT INTO trip (tripid, driverid, routeid, busid) VALUES (%s,%s,%s,%s)",
+    #         trip_rows,
+    #     )
+    #     conn.commit()
+    #     print("הנתונים הוכנסו ל-PostgreSQL בהצלחה.")
+    # except Exception as e:
+    #     conn.rollback()
+    #     print(f"שגיאת מסד נתונים: {e}")
+    #     raise
+    # finally:
+    #     conn.close()
 
 
 if __name__ == "__main__":
