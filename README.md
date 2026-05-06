@@ -409,7 +409,7 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 שני המנגנונים משלימים זה את זה: אילוצים שומרים על שלמות ואיכות הנתונים, ואינדקסים מאפשרים לשלוף את אותם נתונים מהר ובאופן צפוי יותר בביצועים.
 
-## טרנזקציה עם `ROLLBACK` (סעיף 8)
+## טרנזקציה עם `ROLLBACK` 
 
 נפתחת טרנזקציה ב־`BEGIN`, מתבצע `UPDATE` ל־`fullname` של נהג `1001`, מוצגת התוצאה ב־`SELECT` — ואז `ROLLBACK` **מבטל** את השינוי. ה־`SELECT` האחרון מראה שהנתונים חזרו למצב הקודם.
 
@@ -421,14 +421,14 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 ![אחרי `ROLLBACK` — הנתונים חזרו](rollback-commit-images/after%20%282%29.png)
 
-## טרנזקציה עם `COMMIT` (סעיף 9)
+## טרנזקציה עם `COMMIT` 
 
 נפתחת טרנזקציה ב־`BEGIN`, מתבצע `UPDATE` על טלפון נהג (`driverid = 1001`), נבדקת התוצאה ב־`SELECT`, מתבצע `COMMIT` — והשינוי רשום ונשמר בבסיס הנתונים. ה־`SELECT` האחרון מאשר שהערך נשאר גם אחרי סגירת הטרנזקציה.
 
 להריץ את כל הקטע בבת אחת ב־Query Tool. אחרי ההגשה אפשר להחזיר טלפון ידנית אם צריך.
 
-![לפני — מצב לפני COMMIT](commit-images/before.png)
+![לפני — מצב לפני COMMIT](rollback-commit-images/before.png)
 
-![בתוך הטרנזקציה — אחרי UPDATE, לפני/עם סיום COMMIT](commit-images/inProcess.png)
+![בתוך הטרנזקציה — אחרי UPDATE, לפני/עם סיום COMMIT](rollback-commit-images/inProcess.png)
 
-![אחרי — השינוי נשמר לאחר COMMIT](commit-images/after.png)
+![אחרי — השינוי נשמר לאחר COMMIT](rollback-commit-images/after.png)
