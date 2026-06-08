@@ -488,34 +488,43 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 ## תרשימי DSD ו-ERD
 
-### ERD מקורי (שלב א)
+### ERD מקורי (האגף הישן)
 
-![ERD מקורי — ניהול נהגים](erd-diagram/erdplus.png)
+![ERD מקורי — ניהול נהגים](stage3/images/lastERD.png)
 
-### DSD — האגף החדש (לאחר שחזור גיבוי)
+### DSD מקורי (האגף הישן)
 
-![DSD — האגף שהתקבל](stage3/images/newDSD.png)
+![DSD מקורי — ניהול נהגים](stage3/images/lastDSD.png)
 
-### ERD — האגף החדש (הינדוס לאחור)
+
+### ERD — האגף החדש 
 
 ![ERD — האגף שהתקבל](stage3/images/newERD.png)
 
-### ERD משולב (עיצוב האינטגרציה)
+### DSD — האגף החדש
+
+![DSD — האגף שהתקבל](stage3/images/newDSD.png)
+
+
+### ERD משולב 
 
 ![ERD משולב](stage3/images/newIntagratedERD.png)
 
-The integrated ERD combines entities and relationships from both original systems:
+ה-ERD המשולב מאחד ישויות וקשרים משני המערכות המקוריות:
 
-Driver management system: Driver, Bus, and Trip
-The Trip entity includes references to drivers and buses through driver_id and bus_id, representing transportation assignments.
-Route management system: Region, Site, Vehicle, Route_stop, and Region_vehicle
-These entities manage geographic regions, stops, vehicles, and route planning.
-Shared entities: Route, Stop, and Trip
-These entities were integrated using attributes from both original databases. The unified schema combines route information, stop details, and trip scheduling into a single transportation management model.
-
-### DSD — לאחר אינטגרציה
+### DSD משולב
 
 ![DSD משולב](stage3/images/newIntagratedDSD.png)
+
+
+**מערכת ניהול נהגים (שלנו):** Driver, Bus ו-Trip  
+ישות Trip כוללת קישורים לנהגים ולאוטובוסים באמצעות `driver_id` ו-`bus_id`, ומייצגת שיבוץ נהגים ורכבים לנסיעות.
+
+**מערכת ניהול מסלולים (הדטהבייס הנוסף שהתקבל):** Region, Site, Vehicle, Route_stop ו-Region_vehicle  
+ישויות אלו מנהלות אזורים גיאוגרפיים, אתרים, רכבים ותכנון מסלולים.
+
+**ישויות משותפות:** Route, Stop ו-Trip  
+ישויות אלו שולבו עם מאפיינים משני בסיסי הנתונים המקוריים. הסכמה המאוחדת מרכזת מידע על מסלולים, תחנות ולוחות זמני נסיעות במודל ניהול תחבורה אחד.
 
 ---
 
@@ -587,13 +596,13 @@ ALTER TABLE ROUTESTOP RENAME TO ROUTESTOP_OLD;
 
 הקובץ המלא: [`stage3/views.sql`](./stage3/views.sql)
 
-נכתבו **שני מבטים** — אחד מנקודת המבט של המערכת המקורית (נהגים ונסיעות), והשני מנקודת המבט של האגף שהתקבל (מסלולים ותחנות). כל מבט משלב **לפחות שתי טבלאות**.
+נכתבו **שני מבטים** — אחד מנקודת המבט של **המערכת המקורית שלנו** (נהגים, אוטובוסים ונסיעות), והשני מנקודת המבט של **הדטהבייס הנוסף שהתקבל** (מערכת ניהול מסלולים, תחנות ואזורים). כל מבט משלב **לפחות שתי טבלאות**.
 
 ---
 
-### מבט 1 — `V_DriverTrips` (מערכת נהגים)
+### מבט 1 — `V_DriverTrips` (המערכת המקורית שלנו)
 
-**תיאור:** מבט המציג לכל נסיעה את פרטי הנהג, האוטובוס והמסלול — מיזוג של `trip`, `driver`, `bus` ו-`route`. מתאים למסכי ניהול נהגים, לוח שנה ודוחות תפעול.
+**תיאור:** מבט המציג לכל נסיעה את פרטי הנהג, האוטובוס והמסלול — מיזוג של `trip`, `driver`, `bus` ו-`route` **מהמערכת המקורית שלנו**. מתאים למסכי ניהול נהגים, לוח שנה ודוחות תפעול.
 
 **יצירת המבט:**
 
@@ -659,9 +668,9 @@ WHERE end_location = 'חיפה';
 
 ---
 
-### מבט 2 — `V_RouteStops` (מערכת מסלולים ותחנות)
+### מבט 2 — `V_RouteStops` (הדטהבייס הנוסף שהתקבל)
 
-**תיאור:** מבט המציג לכל מסלול את רשימת התחנות לפי סדר העצירה — מיזוג `route_stop`, `route` ו-`stop`. מתאים למסכי תכנון מסלול, מפות ולוחות זמנים.
+**תיאור:** מבט המציג לכל מסלול את רשימת התחנות לפי סדר העצירה — מיזוג `route_stop`, `route` ו-`stop` **לפי מודל הדטהבייס הנוסף שהתקבל** (מערכת ניהול מסלולים, תחנות ואזורים), כולל `region_id` ו-`estimated_arrival_time`. מתאים למסכי תכנון מסלול, מפות ולוחות זמנים.
 
 **יצירת המבט:**
 
@@ -750,6 +759,6 @@ WHERE stop_id = 10;
 * עיצוב ERD משולב והחלטות תיעוד על מיזוג ישויות
 * אינטגרציה ב-SQL על טבלאות קיימות (שינוי שם, יצירת טבלאות ביניים, העתקת נתונים, מחיקה ו-rename)
 * עדכון והרצת שאילתות שלב ב על הסכמה החדשה
-* שני מבטים (`V_DriverTrips`, `V_RouteStops`) עם שתי שאילתות משמעותיות לכל מבט
+* שני מבטים — `V_DriverTrips` (המערכת המקורית) ו-`V_RouteStops` (הדטהבייס הנוסף שהתקבל) — עם שתי שאילתות משמעותיות לכל מבט
 
 הבסיס המשולב תומך הן בניהול נהגים ואוטובוסים והן במודל מסלולים, תחנות ואזורים — ומאפשר המשך פיתוח על תשתית אחת.
