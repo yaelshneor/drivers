@@ -432,3 +432,324 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 ![בתוך הטרנזקציה — אחרי UPDATE, לפני/עם סיום COMMIT](rollback-commit-images/inProcess.png)
 
 ![אחרי — השינוי נשמר לאחר COMMIT](rollback-commit-images/after.png)
+
+---
+
+# שלב ג — אינטגרציה ומבטים
+
+## תוכן עניינים
+
+1. [מבוא](#מבוא-1)
+2. [אלגוריתם הינדוס לאחור (DSD → ERD)](#אלגוריתם-הינדוס-לאחור-dsd--erd)
+3. [תרשימי DSD ו-ERD](#תרשימי-dsd-ו-erd)
+4. [החלטות אינטגרציה](#החלטות-אינטגרציה)
+5. [תהליך האינטגרציה ופקודות SQL](#תהליך-האינטגרציה-ופקודות-sql)
+6. [הרצת שאילתות שלב ב על הבסיס המשולב](#הרצת-שאילתות-שלב-ב-על-הבסיס-המשולב)
+7. [מבטים (`Views.sql`)](#מבטים-viewssql)
+8. [קבצי הגשה](#קבצי-הגשה)
+9. [סיכום](#סיכום-1)
+
+---
+
+## מבוא
+
+בשלב זה שולבו שני בסיסי נתונים לבסיס אחד, לפי **שיטה א** — אינטגרציה על ידי עיצוב ERD משותף והמרתו לסכמה, **בלי** ליצור מחדש את כל הטבלאות. שוחזר גיבוי של פרויקט נוסף (מערכת ניהול מסלולים, תחנות ואזורים) לצד המערכת המקורית (נהגים, אוטובוסים ונסיעות), נבנה ERD משולב, ובוצעו שינויי DDL בקובץ [`stage3/integrate.sql`](./stage3/integrate.sql).
+
+**מערכת מקורית (שלנו):** נהגים, אוטובוסים, נסיעות, מסלולים, תחנות — `driver`, `bus`, `trip`, `route`, `stop`, `routestop`.
+
+**מערכת שהתקבלה:** אזורים, אתרים, רכבים, מסלולים מורחבים, תחנות עם קישור לאתר — `region`, `site`, `vehicle`, `route`, `stop`, `route_stop`, `trip`, `region_vehicle`.
+
+---
+
+## אלגוריתם הינדוס לאחור (DSD → ERD)
+
+מתוך תרשים DSD (סכמה רלationalית) מייצרים ERD לוגי כך:
+
+1. **זיהוי ישויות** — כל טבלה ב-DSD הופכת לישות (מלבן) ב-ERD. שם הישות הוא שם הטבלה (למשל `ROUTE`, `STOP`, `VEHICLE`).
+
+2. **זיהוי מאפיינים** — כל עמודה שאינה מפתח זר הופכת לאוב (attribute) המקושר לישות. עמודות כמו `route_name`, `start_location` משויכות לישות `Route`.
+
+3. **זיהוי מפתח ראשי** — עמודה עם קו תחתון ב-DSD (או `PRIMARY KEY` ב-SQL) היא מזהה הישות; ב-ERD מסמנים אותה בקו תחתון.
+
+4. **זיהוי קשרים ממפתחות זרים** — חץ FK מטבלה A לטבלה B מייצג קשר:
+   - FK בצד «הרבים» → קשר **N:1** (או 1:N מהצד השני).
+   - דוגמה: `route.region_id → region` → קשר `Has_routes`: Region (1) — Route (N).
+
+5. **טבלאות מקשר (Junction)** — טבלה עם שני FK וללא מפתח surrogate משלה (למשל `route_stop`, `region_vehicle`):
+   - מייצגת קשר **M:N** בין שתי הישויות, עם מאפיינים נוספים (`stop_order`, `estimated_arrival_time`) על הקשר.
+
+6. **ישות חלשה (אופציונלי)** — אם מפתח ראשי של טבלה מקשרת כולל FK (למשל `(route_id, stop_id)` ב-`route_stop`), ניתן לייצג ב-ERD ישות חלשה `Route_stop` תלויה ב-`Route`.
+
+7. **בדיקת עקביות** — לכל FK ב-DSD חייב להופיע קשר ב-ERD; לכל ישות ב-ERD חייבת להיות טבלה ב-DSD.
+
+**יישום:** על גיבוי האגף החדש נבנה [`stage3/images/newDSD.png`](./stage3/images/newDSD.png), ומשם נגזר [`stage3/images/newERD.png`](./stage3/images/newERD.png).
+
+---
+
+## תרשימי DSD ו-ERD
+
+### ERD מקורי (שלב א)
+
+![ERD מקורי — ניהול נהגים](erd-diagram/erdplus.png)
+
+### DSD — האגף החדש (לאחר שחזור גיבוי)
+
+![DSD — האגף שהתקבל](stage3/images/newDSD.png)
+
+### ERD — האגף החדש (הינדוס לאחור)
+
+![ERD — האגף שהתקבל](stage3/images/newERD.png)
+
+### ERD משולב (עיצוב האינטגרציה)
+
+![ERD משולב](stage3/images/newIntagratedERD.png)
+
+The integrated ERD combines entities and relationships from both original systems:
+
+Driver management system: Driver, Bus, and Trip
+The Trip entity includes references to drivers and buses through driver_id and bus_id, representing transportation assignments.
+Route management system: Region, Site, Vehicle, Route_stop, and Region_vehicle
+These entities manage geographic regions, stops, vehicles, and route planning.
+Shared entities: Route, Stop, and Trip
+These entities were integrated using attributes from both original databases. The unified schema combines route information, stop details, and trip scheduling into a single transportation management model.
+
+### DSD — לאחר אינטגרציה
+
+![DSD משולב](stage3/images/newIntagratedDSD.png)
+
+---
+
+## החלטות אינטגרציה
+
+| נושא | החלטה | נימוק |
+|------|--------|--------|
+| טבלאות כפולות (`route`, `stop`, `trip`, `routestop` / `route_stop`) | שינוי שם לטבלאות ממערכת 1 ל-`*_OLD`, שמירה על טבלאות ממערכת 2 | מניעת התנגשות שמות; שימוש בטבלאות קיימות |
+| `route` | יצירת `route_new` עם שדות משני המקורות + `region_id` | מיזוג `EstimatedDuration` (מערכת 1) עם `total_distance_km`, `created_date`, `region_id` (מערכת 2) |
+| `stop` | יצירת `stop_new` + עמודת `site_name` (FK ל-`site`) | שמירת latitude ו-longitude משני המקורות + קישור לאתר מהמערכת החדשה |
+| `route_stop` | מיזוג `routestop` (מערכת 1) ו-`route_stop` (מערכת 2) + `estimated_arrival_time` | איחוד טבלאות מקשרות; למערכת 1 הוכנס ערך ברירת מחדל `0` לשעת הגעה |
+| `driver`, `bus` | **לא נמחקו** — נשארו מהמערכת המקורית | שמירה על מסכי ניהול נהגים ואוטובוסים |
+| `vehicle`, `region`, `site`, `region_vehicle` | **נשארו** מהמערכת החדשה | תמיכה באזורים, אתרים ורכבים לפי מודל האגף השני |
+| `trip` | נשאר ממערכת 2; קישור ל-`bus_id` ו-`driver_id` | נסיעות מקושרות גם לנהג וגם לאוטובוס מהמערכת המקורית |
+| נתונים חסרים במיזוג | ערכי ברירת מחדל (`region_id=1`, `created_date=0`, `site_name=0`) | שמירה על שלמות FK בעת העתקה ממערכת 1 |
+
+---
+
+## תהליך האינטגרציה ופקודות SQL
+
+הקובץ המלא: [`stage3/integrate.sql`](./stage3/integrate.sql)
+
+### שלב 1 — שינוי שמות טבלאות כפולות
+
+```sql
+ALTER TABLE ROUTE RENAME TO ROUTE_OLD;
+ALTER TABLE STOP RENAME TO STOP_OLD;
+ALTER TABLE TRIP RENAME TO TRIP_OLD;
+ALTER TABLE ROUTESTOP RENAME TO ROUTESTOP_OLD;
+```
+
+לאחר שחזור שני הגיבויים לאותו DB, לשתי המערכות היו טבלאות בשם זהה. טבלאות ממערכת 1 (נהגים) שונו ל-`*_OLD`; טבלאות ממערכת 2 נשארו בשם המקורי.
+
+### שלב 2–4 — מיזוג `route`
+
+1. יצירת `route_new` עם כל העמודות מה-ERD המשולב.
+2. `INSERT` מ-`route_old` — מיפוי `RouteID` → `route_id`, `EstimatedDuration` → `estimated_duration_minutes`.
+3. `INSERT` מ-`route` (מערכת 2) — רק `route_id` שלא קיים כבר ב-`route_new`.
+
+### שלב 5–7 — מיזוג `stop`
+
+1. יצירת `stop_new` עם `site_name` כ-FK ל-`site`.
+2. העתקה מ-`stop_old` ומ-`stop` (מערכת 2) באותו עיקרון `NOT EXISTS`.
+
+### שלב 8–10 — מיזוג `route_stop`
+
+1. יצירת `route_stop_new` עם `stop_order`, `estimated_arrival_time`, `route_id`, `stop_id`.
+2. העתקה מ-`routestop_old` (עם `estimated_arrival_time = 0`) ומ-`route_stop`.
+
+### שלב 11–13 — ניקוי ושינוי שמות
+
+- הסרת FK ישן מ-`trip` ל-`route`.
+- מחיקת `route_old`, `stop_old`, `routestop_old`.
+- `route_new` → `route`, `stop_new` → `stop`, `route_stop_new` → `route_stop`.
+
+---
+
+## הרצת שאילתות שלב ב על הבסיס המשולב
+
+לאחר האינטגרציה עודכנו שמות העמודות ב-[`scripts/Queries.sql`](./scripts/Queries.sql) (למשל `driverid`, `trip_date`, `route_name`). השאילתות הורצו מחדש על הבסיס המשולב.
+
+**דוגמה — לוח נסיעות לנהג (מסך 8):** שאילתה עם `JOIN` בין `trip` ל-`route`, סינון לפי `driver_id`, שנה וחודש מתוך `trip_date`, ומיון לפי `departure_time`.
+
+![שאילתת שלב ב על בסיס משולב — לוח נסיעות](stage3/images/lastSQL.png)
+
+---
+
+## מבטים (`Views.sql`)
+
+הקובץ המלא: [`stage3/views.sql`](./stage3/views.sql)
+
+נכתבו **שני מבטים** — אחד מנקודת המבט של המערכת המקורית (נהגים ונסיעות), והשני מנקודת המבט של האגף שהתקבל (מסלולים ותחנות). כל מבט משלב **לפחות שתי טבלאות**.
+
+---
+
+### מבט 1 — `V_DriverTrips` (מערכת נהגים)
+
+**תיאור:** מבט המציג לכל נסיעה את פרטי הנהג, האוטובוס והמסלול — מיזוג של `trip`, `driver`, `bus` ו-`route`. מתאים למסכי ניהול נהגים, לוח שנה ודוחות תפעול.
+
+**יצירת המבט:**
+
+```sql
+CREATE VIEW V_DriverTrips AS
+SELECT
+    t.trip_id,
+    t.trip_date,
+    t.departure_time,
+    d.driverid,
+    d.fullname AS driver_name,
+    b.busid,
+    b.licenseplate,
+    r.route_name,
+    r.start_location,
+    r.end_location
+FROM trip t
+JOIN driver d ON t.driver_id = d.driverid
+JOIN bus b ON t.bus_id = b.busid
+JOIN route r ON t.route_id = r.route_id;
+```
+
+**שליפה — `SELECT *` (10 רשומות ראשונות):**
+
+```sql
+SELECT * FROM V_DriverTrips LIMIT 10;
+```
+
+![מבט 1 — SELECT * לנהג 1001](stage3/images/View1first.png)
+
+---
+
+#### שאילתה 1 על המבט — נסיעות של נהג מסוים
+
+**מטרה:** הצגת כל הנסיעות (עם פרטי אוטובוס ומסלול) עבור נהג לפי מזהה.
+
+```sql
+SELECT *
+FROM V_DriverTrips
+WHERE driverid = 1001;
+```
+
+**פלט:** שורה/ות עם `trip_id`, `trip_date`, `departure_time`, שם נהג, לוחית, שם מסלול ומיקומי התחלה/סיום — כפי שמוצג בצילום למעלה.
+
+---
+
+#### שאילתה 2 על המבט — נסיעות שיעדן חיפה
+
+**מטרה:** רשימת נהגים, שמות מסלולים ותאריכי נסיעה לכל הנסיעות שמסתיימות בחיפה — לדוגמה לתכנון קווים או דוח אזורי.
+
+```sql
+SELECT
+    driver_name,
+    route_name,
+    trip_date
+FROM V_DriverTrips
+WHERE end_location = 'חיפה';
+```
+
+![מבט 1 — שאילתה 2, יעד חיפה](stage3/images/view1Second%20SQL.png)
+
+**פלט:** עמודות `driver_name`, `route_name`, `trip_date` — מספר שורות (בדוגמה: 10+) של נהגים שונים על מסלול «אמנות בין נתניה לחיפה».
+
+---
+
+### מבט 2 — `V_RouteStops` (מערכת מסלולים ותחנות)
+
+**תיאור:** מבט המציג לכל מסלול את רשימת התחנות לפי סדר העצירה — מיזוג `route_stop`, `route` ו-`stop`. מתאים למסכי תכנון מסלול, מפות ולוחות זמנים.
+
+**יצירת המבט:**
+
+```sql
+CREATE VIEW V_RouteStops AS
+SELECT
+    r.route_id,
+    r.route_name,
+    s.stop_id,
+    s.stop_name,
+    rs.stop_order,
+    rs.estimated_arrival_time,
+    r.region_id
+FROM route_stop rs
+JOIN route r ON rs.route_id = r.route_id
+JOIN stop s ON rs.stop_id = s.stop_id;
+```
+
+**שליפה — `SELECT *` (10 רשומות ראשונות):**
+
+```sql
+SELECT * FROM V_RouteStops LIMIT 10;
+```
+
+---
+
+#### שאילתה 1 על המבט — סדר תחנות במסלול
+
+**מטרה:** הצגת שמות התחנות וסדר העצירה במסלול מסוים — לבניית מסך «מסלול מפורט».
+
+```sql
+SELECT
+    stop_name,
+    stop_order
+FROM V_RouteStops
+WHERE route_id = 244
+ORDER BY stop_order;
+```
+
+![מבט 2 — שאילתה 1, מסלול 244](stage3/images/view2first.png)
+
+**פלט:** 20 שורות — `Stop 137` (סדר 1), `Stop 131` (2), `Johnson Square Stop` (4) וכו', ממוינות לפי `stop_order`.
+
+---
+
+#### שאילתה 2 על המבט — מסלולים שעוברים בתחנה
+
+**מטרה:** מציאת כל המסלולים שכוללים תחנה מסוימת — שימושי לתכנון רשת תחבורה או שינוי בלו"ז.
+
+```sql
+SELECT DISTINCT
+    route_id,
+    route_name
+FROM V_RouteStops
+WHERE stop_id = 10;
+```
+
+![מבט 2 — שאילתה 2, תחנה 10](stage3/images/view2second.png)
+
+**פלט:** 28 מסלולים שונים (למשל «מסלול טבע בין עכו לאילת», «מסלול מורשת בין נצרת לצפת») — כלומר תחנה 10 משמשת במספר קווים.
+
+---
+
+## קבצי הגשה
+
+| קובץ | מיקום |
+|------|--------|
+| DSD אגף חדש | [`stage3/images/newDSD.png`](./stage3/images/newDSD.png) |
+| ERD אגף חדש | [`stage3/images/newERD.png`](./stage3/images/newERD.png) |
+| ERD משולב | [`stage3/images/newIntagratedERD.png`](./stage3/images/newIntagratedERD.png) |
+| DSD לאחר אינטגרציה | [`stage3/images/newIntagratedDSD.png`](./stage3/images/newIntagratedDSD.png) |
+| פקודות אינטגרציה | [`stage3/integrate.sql`](./stage3/integrate.sql) |
+| מבטים ושאילתות | [`stage3/views.sql`](./stage3/views.sql) |
+| גיבוי מעודכן | [`backup3`](./backup3) |
+| שאילתות שלב ב (מעודכנות) | [`scripts/Queries.sql`](./scripts/Queries.sql) |
+
+**TAG ב-Git:** יש ליצור tag לשלב ג' לפי הוראות הקורס.
+
+---
+
+## סיכום
+
+בשלב ג' בוצעו:
+
+* הינדוס לאחור מ-DSD ל-ERD עבור האגף שהתקבל
+* עיצוב ERD משולב והחלטות תיעוד על מיזוג ישויות
+* אינטגרציה ב-SQL על טבלאות קיימות (שינוי שם, יצירת טבלאות ביניים, העתקת נתונים, מחיקה ו-rename)
+* עדכון והרצת שאילתות שלב ב על הסכמה החדשה
+* שני מבטים (`V_DriverTrips`, `V_RouteStops`) עם שתי שאילתות משמעותיות לכל מבט
+
+הבסיס המשולב תומך הן בניהול נהגים ואוטובוסים והן במודל מסלולים, תחנות ואזורים — ומאפשר המשך פיתוח על תשתית אחת.
