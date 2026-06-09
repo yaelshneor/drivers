@@ -1034,5 +1034,3 @@ VALUES (999999, CURRENT_DATE, 800, 40, 1, 99999, 1);
 * 2 תוכניות ראשיות ב-[`stage4/main.sql`](./stage4/main.sql) — כל אחת מפעילה 2 פונקציות ופרוצדורה אחת
 * 2 טריגרים — audit על UPDATE וולידציה על INSERT
 * תיעוד הרצה מלא לפי שלבי `main.sql` (כולל `update_route_statistics`)
-
-לפני הגשה: ליצור `backup4` ו-tag ב-Git.
