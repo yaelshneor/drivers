@@ -56,8 +56,8 @@ export function mapDriverRow(row: {
     id: String(row.driverid),
     name: row.fullname,
     phone: row.phone ?? '',
-    licensePlate: row.licenseplate != null ? String(row.licenseplate) : row.licensetype,
-    busType: row.manufacturer ? `${row.manufacturer} ${row.model ?? ''}`.trim() : '',
+    licenseType: row.licensetype,
+    assignedBus: row.manufacturer ? `${row.manufacturer} ${row.model ?? ''}`.trim() : '',
   };
 }
 

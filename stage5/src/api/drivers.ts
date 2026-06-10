@@ -9,12 +9,16 @@ export function fetchDriverById(id: string): Promise<Driver> {
   return apiGet<Driver>(`/api/drivers/${encodeURIComponent(id)}`);
 }
 
+export function fetchLicenseTypes(): Promise<string[]> {
+  return apiGet<string[]>('/api/drivers/license-types');
+}
+
 export function createDriver(driver: Driver): Promise<Driver> {
   return apiPost<Driver>('/api/drivers', {
     id: driver.id,
     name: driver.name,
     phone: driver.phone,
-    licensePlate: driver.licensePlate,
+    licenseType: driver.licenseType,
   });
 }
 
@@ -22,7 +26,7 @@ export function updateDriverApi(driver: Driver): Promise<Driver> {
   return apiPut<Driver>(`/api/drivers/${encodeURIComponent(driver.id)}`, {
     name: driver.name,
     phone: driver.phone,
-    licensePlate: driver.licensePlate,
+    licenseType: driver.licenseType,
   });
 }
 

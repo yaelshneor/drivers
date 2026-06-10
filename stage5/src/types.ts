@@ -2,8 +2,8 @@ export interface Driver {
   id: string;
   name: string;
   phone: string;
-  licensePlate: string;
-  busType: string;
+  licenseType: string;
+  assignedBus: string;
 }
 
 export interface Trip {

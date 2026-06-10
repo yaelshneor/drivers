@@ -32,6 +32,7 @@ import { Driver, Trip, TripAssignment, BusOption, RouteOption } from './types';
 import {
   fetchDriverById,
   fetchDrivers,
+  fetchLicenseTypes,
   createDriver,
   updateDriverApi,
   deleteDriverApi,
@@ -345,7 +346,7 @@ function DriverDashboard({
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold">שלום, {driver.name}</h1>
-          <p className="text-slate-500">מזהה: {driver.id} | אוטובוס: {driver.busType}</p>
+          <p className="text-slate-500">מזהה: {driver.id} | רישיון: {driver.licenseType}{driver.assignedBus ? ` | אוטובוס: ${driver.assignedBus}` : ''}</p>
         </div>
         <div className="flex items-center gap-4">
           <button 
@@ -689,19 +690,19 @@ function ManagerDashboard({
                       <th className="px-6 py-4 font-semibold text-slate-600">שם נהג</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">ID</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">טלפון</th>
-                      <th className="px-6 py-4 font-semibold text-slate-600">מספר רישוי</th>
-                      <th className="px-6 py-4 font-semibold text-slate-600">אוטובוס</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">סוג רישיון</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">פעולות</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {drivers.map(driver => (
+                    {drivers.map(driver => {
+                      const hasTrips = trips.some((t) => t.driverId === driver.id);
+                      return (
                       <tr key={driver.id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4 font-medium">{driver.name}</td>
                         <td className="px-6 py-4 text-slate-500">{driver.id}</td>
                         <td className="px-6 py-4 text-slate-500">{driver.phone}</td>
-                        <td className="px-6 py-4 text-slate-500">{driver.licensePlate}</td>
-                        <td className="px-6 py-4 text-slate-500">{driver.busType}</td>
+                        <td className="px-6 py-4 text-slate-500">{driver.licenseType}</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
                             <button 
@@ -712,11 +713,18 @@ function ManagerDashboard({
                               <Eye size={18} />
                             </button>
                             <button onClick={() => onEditDriver(driver)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="ערוך"><Edit2 size={18} /></button>
-                            <button onClick={() => onDeleteDriver(driver.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="מחק"><Trash2 size={18} /></button>
+                            <button
+                              onClick={() => !hasTrips && onDeleteDriver(driver.id)}
+                              disabled={hasTrips}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                              title={hasTrips ? 'לא ניתן למחוק נהג עם נסיעות משויכות' : 'מחק'}
+                            >
+                              <Trash2 size={18} />
+                            </button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               </div>
@@ -1073,13 +1081,20 @@ function DriverStatsView({ trips }: { trips: Trip[] }) {
 }
 
 function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, onClose: () => void, onSave: (d: Driver) => void }) {
+  const [licenseTypes, setLicenseTypes] = useState<string[]>([]);
   const [formData, setFormData] = useState<Driver>(driver || {
     id: '',
     name: '',
     phone: '',
-    licensePlate: '',
-    busType: ''
+    licenseType: '',
+    assignedBus: '',
   });
+
+  useEffect(() => {
+    fetchLicenseTypes()
+      .then(setLicenseTypes)
+      .catch(() => alert('שגיאה בטעינת סוגי רישיון'));
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1123,36 +1138,26 @@ function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, o
               className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">מספר רישוי</label>
-              <input 
-                type="text" 
-                value={formData.licensePlate}
-                onChange={(e) => setFormData({...formData, licensePlate: e.target.value})}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">סוג אוטובוס</label>
-              <select 
-                value={formData.busType}
-                onChange={(e) => setFormData({...formData, busType: e.target.value})}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">בחר סוג...</option>
-                <option value="אוטובוס עירוני">אוטובוס עירוני</option>
-                <option value="אוטובוס תיירותי">אוטובוס תיירותי</option>
-                <option value="מיניבוס">מיניבוס</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">סוג רישיון</label>
+            <select
+              value={formData.licenseType}
+              onChange={(e) => setFormData({ ...formData, licenseType: e.target.value })}
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">בחר סוג רישיון...</option>
+              {licenseTypes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
           </div>
         </div>
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 text-slate-600 font-medium">ביטול</button>
           <button 
-            onClick={() => onSave(formData)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-100"
+            onClick={() => formData.name && formData.id && formData.licenseType && onSave(formData)}
+            disabled={!formData.name || !formData.id || !formData.licenseType}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-100"
           >
             שמור נהג
           </button>
@@ -1185,12 +1190,12 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
               <span className="font-medium">{driver.phone}</span>
             </div>
             <div>
-              <span className="block text-[10px] font-bold text-slate-400 uppercase">מספר רישוי</span>
-              <span className="font-medium">{driver.licensePlate}</span>
+              <span className="block text-[10px] font-bold text-slate-400 uppercase">סוג רישיון</span>
+              <span className="font-medium">{driver.licenseType}</span>
             </div>
             <div>
-              <span className="block text-[10px] font-bold text-slate-400 uppercase">אוטובוס</span>
-              <span className="font-medium">{driver.busType}</span>
+              <span className="block text-[10px] font-bold text-slate-400 uppercase">אוטובוס אחרון</span>
+              <span className="font-medium">{driver.assignedBus || '—'}</span>
             </div>
           </div>
 

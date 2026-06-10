@@ -18,6 +18,18 @@ const DRIVER_SELECT = `
 
 export const driversRouter = Router();
 
+driversRouter.get('/license-types', async (_req, res) => {
+  try {
+    const result = await query<{ licensetype: string }>(
+      `SELECT DISTINCT licensetype FROM driver ORDER BY licensetype`,
+    );
+    return res.json(result.rows.map((row) => row.licensetype));
+  } catch (err) {
+    console.error('GET /api/drivers/license-types', err);
+    return res.status(500).json({ error: 'שגיאת שרת' });
+  }
+});
+
 driversRouter.get('/', async (_req, res) => {
   try {
     const result = await query<{
@@ -65,9 +77,9 @@ driversRouter.get('/:id', async (req, res) => {
 });
 
 driversRouter.post('/', async (req, res) => {
-  const { id, name, phone, licensePlate } = req.body ?? {};
+  const { id, name, phone, licenseType } = req.body ?? {};
   const driverid = Number.parseInt(String(id), 10);
-  if (Number.isNaN(driverid) || !name) {
+  if (Number.isNaN(driverid) || !name || !licenseType) {
     return res.status(400).json({ error: 'נתונים לא תקינים' });
   }
 
@@ -75,7 +87,7 @@ driversRouter.post('/', async (req, res) => {
     await query(
       `INSERT INTO driver (driverid, fullname, phone, licensetype)
        VALUES ($1, $2, $3, $4)`,
-      [driverid, name, phone ?? null, licensePlate ?? 'A'],
+      [driverid, name, phone ?? null, licenseType],
     );
     const result = await query<{
       driverid: number;
@@ -95,8 +107,8 @@ driversRouter.post('/', async (req, res) => {
 
 driversRouter.put('/:id', async (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
-  const { name, phone, licensePlate } = req.body ?? {};
-  if (Number.isNaN(id) || !name) {
+  const { name, phone, licenseType } = req.body ?? {};
+  if (Number.isNaN(id) || !name || !licenseType) {
     return res.status(400).json({ error: 'נתונים לא תקינים' });
   }
 
@@ -104,7 +116,7 @@ driversRouter.put('/:id', async (req, res) => {
     const updated = await query(
       `UPDATE driver SET fullname = $1, phone = $2, licensetype = $3
        WHERE driverid = $4`,
-      [name, phone ?? null, licensePlate ?? 'A', id],
+      [name, phone ?? null, licenseType, id],
     );
     if (updated.rowCount === 0) {
       return res.status(404).json({ error: 'מזהה נהג לא נמצא' });
