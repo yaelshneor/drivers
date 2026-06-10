@@ -12,7 +12,7 @@ app.use('/api', apiRouter);
 
 app.listen(config.port, () => {
   console.log(`API server running on http://localhost:${config.port}`);
-  console.log('Endpoints: /api/health /api/drivers /api/buses /api/routes /api/regions /api/sites /api/stops /api/trips');
+  console.log(`Health check: http://localhost:${config.port}/api/health`);
 });
 
 runMigrations().catch((err) => {
