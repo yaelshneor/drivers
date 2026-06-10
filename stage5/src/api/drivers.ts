@@ -18,7 +18,7 @@ export function createDriver(driver: Driver): Promise<Driver> {
     id: driver.id,
     name: driver.name,
     phone: driver.phone,
-    licenseType: driver.licenseType,
+    licensetype: driver.licensetype,
   });
 }
 
@@ -26,7 +26,7 @@ export function updateDriverApi(driver: Driver): Promise<Driver> {
   return apiPut<Driver>(`/api/drivers/${encodeURIComponent(driver.id)}`, {
     name: driver.name,
     phone: driver.phone,
-    licenseType: driver.licenseType,
+    licensetype: driver.licensetype,
   });
 }
 

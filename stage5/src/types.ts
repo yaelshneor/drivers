@@ -2,7 +2,7 @@ export interface Driver {
   id: string;
   name: string;
   phone: string;
-  licenseType: string;
+  licensetype: string;
 }
 
 export interface Trip {

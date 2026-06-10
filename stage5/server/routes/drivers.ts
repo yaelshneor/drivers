@@ -55,9 +55,10 @@ driversRouter.get('/:id', async (req, res) => {
 });
 
 driversRouter.post('/', async (req, res) => {
-  const { id, name, phone, licenseType } = req.body ?? {};
+  const { id, name, phone, licensetype, licenseType } = req.body ?? {};
+  const type = licensetype ?? licenseType;
   const driverid = Number.parseInt(String(id), 10);
-  if (Number.isNaN(driverid) || !name || !licenseType || !isValidLicenseType(licenseType)) {
+  if (Number.isNaN(driverid) || !name || !type || !isValidLicenseType(type)) {
     return res.status(400).json({ error: 'נתונים לא תקינים' });
   }
 
@@ -65,7 +66,7 @@ driversRouter.post('/', async (req, res) => {
     await query(
       `INSERT INTO driver (driverid, fullname, phone, licensetype)
        VALUES ($1, $2, $3, $4)`,
-      [driverid, name, phone ?? null, licenseType],
+      [driverid, name, phone ?? null, type],
     );
     const result = await query<DriverRow>(
       `${DRIVER_SELECT} WHERE driverid = $1`,
@@ -80,8 +81,9 @@ driversRouter.post('/', async (req, res) => {
 
 driversRouter.put('/:id', async (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
-  const { name, phone, licenseType } = req.body ?? {};
-  if (Number.isNaN(id) || !name || !licenseType || !isValidLicenseType(licenseType)) {
+  const { name, phone, licensetype, licenseType } = req.body ?? {};
+  const type = licensetype ?? licenseType;
+  if (Number.isNaN(id) || !name || !type || !isValidLicenseType(type)) {
     return res.status(400).json({ error: 'נתונים לא תקינים' });
   }
 
@@ -89,7 +91,7 @@ driversRouter.put('/:id', async (req, res) => {
     const updated = await query(
       `UPDATE driver SET fullname = $1, phone = $2, licensetype = $3
        WHERE driverid = $4`,
-      [name, phone ?? null, licenseType, id],
+      [name, phone ?? null, type, id],
     );
     if (updated.rowCount === 0) {
       return res.status(404).json({ error: 'מזהה נהג לא נמצא' });

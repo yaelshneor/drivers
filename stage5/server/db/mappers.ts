@@ -53,7 +53,7 @@ export function mapDriverRow(row: {
     id: String(row.driverid),
     name: row.fullname,
     phone: row.phone ?? '',
-    licenseType: row.licensetype,
+    licensetype: row.licensetype,
   };
 }
 
