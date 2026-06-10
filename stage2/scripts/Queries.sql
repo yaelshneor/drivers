@@ -242,3 +242,10 @@ WHERE trip_id IN (
         HAVING COUNT(DISTINCT t2.trip_id) > 2
     )
 );
+
+DELETE FROM driver d
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM trip t
+    WHERE t.driver_id = d.driverid
+);

@@ -107,13 +107,25 @@ SELECT
 FROM STOP_OLD
 UNION ALL
 SELECT
-    stop_id,
+    stop_id+ 1000,
     stop_name,
     address,
     latitude,
     longitude,
     site_name
 FROM STOP;
+
+DELETE FROM STOP_NEW s 
+WHERE s.stop_id IN (
+    SELECT stop_id
+    FROM (STOP_NEW s1 NATURAL JOIN STOP_NEW s2)
+    WHERE s1.stop_name = s2.stop_name 
+    AND s1.address = s2.address
+     AND s1.latitude = s2.latitude 
+    AND s1.longitude = s2.longitude 
+    AND s1.site_name = s2.site_name;       
+)
+
 
 -- ==========================================
 -- STEP 6 - Create integrated ROUTE_STOP table

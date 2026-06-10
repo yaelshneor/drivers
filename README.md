@@ -15,6 +15,33 @@
 
 ניהול נהגים 
 
+## תוכן עניינים
+
+### כללי
+- [מגישות](#מגישות)
+- [המערכת](#המערכת)
+- [היחידה הנבחרת](#-היחידה-הנבחרת)
+
+### שלב א
+- [שלב א — כולו](#שלב-א)
+- [מבוא](#מבוא) · [ERD ו-DSD](#תרשימי-erd-ו-dsd) · [הכנסת נתונים](#-הכנסת-נתונים) · [גיבוי ושחזור](#גיבוי-ושחזור)
+
+### שלב ב
+- [שלב ב — כולו](#שלב-ב)
+- [שאילתות SELECT / UPDATE / DELETE](#סיכום-נסיעות-לפי-נהג)
+- [אילוצים](#אילוצים-נוספים-constraintssql) · [אינדקסים](#אינדקסים-indexsql)
+- [ROLLBACK](#טרנזקציה-עם-rollback) · [COMMIT](#טרנזקציה-עם-commit)
+
+### שלב ג
+- [שלב ג — כולו](#שלב-ג--אינטגרציה-ומבטים)
+- [אינטגרציה SQL](#תהליך-האינטגרציה-ופקודות-sql) · [מבטים](#מבטים-viewssql)
+
+### שלב ד
+- [שלב ד — כולו](#שלב-ד--תכנות-plpgsql)
+- [תוכנית ראשית 1](#תוכנית-ראשית-1--driver-analysis--route-update)
+- [תוכנית ראשית 2](#תוכנית-ראשית-2--route-maintenance--driver-assignment)
+- [טריגרים](#טריגר-1--trg_trip_update)
+
 ---
 
 
@@ -56,9 +83,9 @@
 
 ## מסכים שנוצרו בעזרת AI
 
-סרטון ההדגמה (`20260429-0828-44.1746523.mp4`) וצילומי המסכים נמצאים בפרויקט.
+סרטון ההדגמה ([`20260429-0828-44.1746523.mp4`](./stage1/screens/20260429-0828-44.1746523.mp4)) וצילומי המסכים נמצאים ב-[`stage1/screens/`](./stage1/screens/).
 
-**[מעבר לתיקיית screens](./screens/)**
+**[מעבר לתיקיית screens](./stage1/screens/)**
 
 ---
 
@@ -69,15 +96,15 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 ## תרשימי ERD ו-DSD
 
-הקבצים המקוריים נמצאים בתיקייה `erd-diagram`.
+הקבצים המקוריים נמצאים בתיקייה `stage1/Init_db/erd-diagram`.
 
 ### ERD
 
-![תרשים ישויות והקשרים (ERD)](erd-diagram/erdplus.png)
+![תרשים ישויות והקשרים (ERD)](stage1/Init_db/erd-diagram/erdplus.png)
 
 ### DSD
 
-![מבנה נתונים לוגי (DSD)](erd-diagram/צילום%20מסך%202026-04-28%20221533.png)
+![מבנה נתונים לוגי (DSD)](stage1/Init_db/erd-diagram/צילום%20מסך%202026-04-28%20221533.png)
 
 ---
 
@@ -98,7 +125,7 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 הנתונים הוכנסו למערכת בשלוש שיטות שונות:
 
 ### הכנסת נתונים ידנית (INSERT)
-ניתן לראות את הקבצים של השאילתות בתוך התקיה scripts
+ניתן לראות את הקבצים בתיקייה [`stage2/scripts/`](./stage2/scripts/)
 
 ### 2. ייבוא נתונים מקובץ CSV
 
@@ -106,12 +133,12 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **צילום מסך Mockaroo**
 
-![יצירת נתונים ב-Mockaroo](mockData/mockaroo.jpeg)
+![יצירת נתונים ב-Mockaroo](stage2/mockData/mockaroo.jpeg)
 
-**קבצי CSV לייבוא:** [`MOCK_DATA_bus.csv`](./mockData/MOCK_DATA_bus.csv), [`MOCK_DATA_driver.csv`](./mockData/MOCK_DATA_driver.csv) (בתיקייה `mockData/`)
+**קבצי CSV לייבוא:** [`MOCK_DATA_bus.csv`](./stage2/mockData/MOCK_DATA_bus.csv), [`MOCK_DATA_driver.csv`](./stage2/mockData/MOCK_DATA_driver.csv) (בתיקייה [`stage2/mockData/`](./stage2/mockData/))
 
 ### 3. הכנסת נתונים באמצעות סקריפט
- יצרנו סקריפט בפיתון שמייצר לנו נתונים בצורה של insert values   ואת הנתונים האלו הרצנו ב PgAdmin 
+ יצרנו סקריפט בפיתון שמייצר לנו נתונים בצורה של insert values — [`stage2/pythonScripts/`](./stage2/pythonScripts/) — ואת הנתונים האלו הרצנו ב-PgAdmin
 
 ---
 
@@ -119,7 +146,7 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 ### גיבוי ושחזור נתונים
 
-![גיבוי ושחזור נתונים ב-pgAdmin](./backup%26restore/backup%26restore.png)
+![גיבוי ושחזור נתונים ב-pgAdmin](./stage1/backup%26restore/backup%26restore.png)
 
 ---
 
@@ -151,23 +178,23 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 ## סיכום נסיעות לפי נהג
 
-שתי השאילתות מציגות עבור כל נהג את שמו ואת מספר הנסיעות שביצע במערכת. המידע נשלף מטבלת הנהגים יחד עם טבלת הנסיעות. הקוד המלא נמצא בקובץ [`scripts/Queries.sql`](./scripts/Queries.sql).
+שתי השאילתות מציגות עבור כל נהג את שמו ואת מספר הנסיעות שביצע במערכת. המידע נשלף מטבלת הנהגים יחד עם טבלת הנסיעות. הקוד המלא נמצא בקובץ [`stage2/scripts/Queries.sql`](./stage2/scripts/Queries.sql).
 
 ### גרסה ראשונה – JOIN ו-GROUP BY
 
 הגרסה הראשונה משתמשת ב־`JOIN` בין `DRIVER` ל־`TRIP` וב־`GROUP BY` לפי מזהה הנהג ושמו, ומחשבת את מספר הנסיעות עם `COUNT`. השיטה הזו יעילה יותר, מכיוון שהיא מבצעת חישוב אחד כולל על כל הנתונים ומקבצת אותם יחד.
 
-![תוצאות שאילתה – JOIN + GROUP BY](queries-images/צילום%20מסך%202026-04-30%20130635.png)
+![תוצאות שאילתה – JOIN + GROUP BY](stage2/queries-images/צילום%20מסך%202026-04-30%20130635.png)
 
 ### גרסה שנייה – Subquery מתואם
 
 הגרסה השנייה בוחרת כל נהג מטבלת `DRIVER`, ובעמודת מספר הנסיעות משתמשת בתת־שאילתה שסופרת (`COUNT`) את הרשומות ב־`TRIP` שמתאימות לאותו נהג. השיטה פחות יעילה, מכיוון שהיא מריצה שאילתת `COUNT` נפרדת עבור כל נהג, מה שגורם להרבה חזרות של חישוב (N פעמים). לכן עבור כמויות נתונים גדולות, הגרסה הראשונה עדיפה מבחינת ביצועים.
 
-![תוצאות שאילתה – Subquery](queries-images/צילום%20מסך%202026-04-30%20131251.png)
+![תוצאות שאילתה – Subquery](stage2/queries-images/צילום%20מסך%202026-04-30%20131251.png)
 
 ## נסיעות לפי נהג ויום (לוח שנה)
 
-השאילתה מציגה את כל הנסיעות של נהג מסוים ביום מסוים, כולל פרטי המסלול, האוטובוס והסטטוס של כל נסיעה, לצורך הצגה בלוח שנה במערכת. שתי הגרסאות בקובץ [`scripts/Queries.sql`](./scripts/Queries.sql).
+השאילתה מציגה את כל הנסיעות של נהג מסוים ביום מסוים, כולל פרטי המסלול, האוטובוס והסטטוס של כל נסיעה, לצורך הצגה בלוח שנה במערכת. שתי הגרסאות בקובץ [`stage2/scripts/Queries.sql`](./stage2/scripts/Queries.sql).
 
 ### גרסה ראשונה – JOIN
 
@@ -175,45 +202,45 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 בנוסף, `JOIN` מאפשר החזרת מידע עשיר יותר (שם מסלול, אוטובוס וכו') ולכן מתאים יותר להצגה במסך לוח שנה.
 
-![תוצאות שאילתה – לוח שנה, JOIN](queries-images/צילום%20מסך%202026-04-30%20134439.png)
+![תוצאות שאילתה – לוח שנה, JOIN](stage2/queries-images/צילום%20מסך%202026-04-30%20134439.png)
 
 ### גרסה שנייה – Subquery עם IN
 
 לעומת זאת, הגרסה השנייה (`Subquery` עם `IN`) פחות יעילה מכיוון שהיא מבצעת בדיקה נוספת של `RouteID` בתוך תת־שאילתה, מה שמוסיף עלות חישובית מיותרת.
 
-![תוצאות שאילתה – לוח שנה, Subquery עם IN](queries-images/צילום%20מסך%202026-04-30%20134632.png)
+![תוצאות שאילתה – לוח שנה, Subquery עם IN](stage2/queries-images/צילום%20מסך%202026-04-30%20134632.png)
 
 ## בקשות לביטול נסיעות (מסך מנהל)
 
-שאילתות שמציגות למנהל נסיעות לטיפול בבקשות ביטול (`Pending Cancellation`), עם פרטי מסלול ואוטובוס. הקוד ב־[`scripts/Queries.sql`](./scripts/Queries.sql).
+שאילתות שמציגות למנהל נסיעות לטיפול בבקשות ביטול (`Pending Cancellation`), עם פרטי מסלול ואוטובוס. הקוד ב־[`stage2/scripts/Queries.sql`](./stage2/scripts/Queries.sql).
 
 ### גרסה ראשונה – JOIN (TRIP, ROUTE, BUS)
 
 חיבור `TRIP` ל־`ROUTE` ול־`BUS` בלבד — שלוש טבלאות ב־`JOIN`, בלי גישה ל־`DRIVER`. מתאים כשמספיקים פרטי נסיעה, מסלול ורכב.
 
-![בקשות ביטול – גרסה 1](queries-images/צילום%20מסך%202026-04-30%20141251.png)
+![בקשות ביטול – גרסה 1](stage2/queries-images/צילום%20מסך%202026-04-30%20141251.png)
 
 ### גרסה שנייה – JOIN כולל DRIVER
 
 מוסיפה `JOIN` ל־`DRIVER` ומסננת לפי `Status = 'Pending Cancellation'`, כשצריך לשייך במפורש את הנתונים גם לנהג.
 
-![בקשות ביטול – גרסה 2](queries-images/צילום%20מסך%202026-04-30%20145307.png)
+![בקשות ביטול – גרסה 2](stage2/queries-images/צילום%20מסך%202026-04-30%20145307.png)
 
 ## מסך נסיעות כללי (נסיעות עתידיות)
 
-שאילתות המציגות נסיעות במצב `Active` או `Pending Cancellation` — מסך ריכוז כל הנסיעות הרלוונטיות מבחינת סטטוס, עם פרטי מסלול ואוטובוס (בגרסת ה־`JOIN`) או שם נהג ושם קו בלבד דרך תת־שאילתות מתואמות (בגרסה השנייה). הקוד ב־[`scripts/Queries.sql`](./scripts/Queries.sql).
+שאילתות המציגות נסיעות במצב `Active` או `Pending Cancellation` — מסך ריכוז כל הנסיעות הרלוונטיות מבחינת סטטוס, עם פרטי מסלול ואוטובוס (בגרסת ה־`JOIN`) או שם נהג ושם קו בלבד דרך תת־שאילתות מתואמות (בגרסה השנייה). הקוד ב־[`stage2/scripts/Queries.sql`](./stage2/scripts/Queries.sql).
 
 ### גרסה ראשונה – JOIN
 
 חיבור `TRIP` ל־`ROUTE` ול־`BUS` בשאילתה אחת, סינון לפי שני הסטטוסים ומיון לפי תאריך הנסיעה — שליפה יעילה כשצריך עמודות רבות מהמסלול ומהאוטובוס.
 
-![מסך נסיעות כללי – גרסה 1](queries-images/צילום%20מסך%202026-04-30%20143525.png)
+![מסך נסיעות כללי – גרסה 1](stage2/queries-images/צילום%20מסך%202026-04-30%20143525.png)
 
 ### גרסה שנייה – תת־שאילתות מתואמות
 
 שליפת שם הנהג ושם הקו באמצעות תת־שאילתות עבור כל שורה מ־`TRIP`; פחות עמודות מגרסת ה־`JOIN`, אך עלות גבוהה יותר כשרשומות רבות כי החיפוש חוזר על עצמו לכל נסיעה.
 
-![מסך נסיעות כללי – גרסה 2](queries-images/צילום%20מסך%202026-04-30%20145801.png)
+![מסך נסיעות כללי – גרסה 2](stage2/queries-images/צילום%20מסך%202026-04-30%20145801.png)
 
 ## שליפות נוספות 
 
@@ -223,7 +250,7 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **מה השאילתה עושה:** בוחרת את `DriverID`, `FullName` ו־`LicenseType` עבור רשומה אחת, לפי `WHERE DriverID = …` (בדוגמה בקובץ: `1002`). אין צורך ב־`JOIN` כי כל המידע נמצא בטבלת הנהגים.
 
-![תוצאות – פרטי נהג לפי מזהה](queries-images/צילום%20מסך%202026-04-30%20151048.png)
+![תוצאות – פרטי נהג לפי מזהה](stage2/queries-images/צילום%20מסך%202026-04-30%20151048.png)
 
 ### 2. היסטוריית נסיעות (נסיעות שכבר עברו)
 
@@ -233,7 +260,7 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **הערות לשימוש:** דורש עמודות `TripDate` (ולמשל `Status`) בטבלת `TRIP`. אם מוצגות גם נסיעות של היום, יש להחליף את התנאי בהתאם (`<=` או טווח תאריכים).
 
-![תוצאות – היסטוריית נסיעות לפני היום](queries-images/צילום%20מסך%202026-05-04%20104123.png)
+![תוצאות – היסטוריית נסיעות לפני היום](stage2/queries-images/צילום%20מסך%202026-05-04%20104123.png)
 
 ### 3. רשימת נהגים (`screen-2.png`)
 
@@ -245,7 +272,7 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **הערות לשימוש:** נדרשת עמודת `Phone` ב־`DRIVER`. מספר הרישוי מגיע מ־`BUS.LicensePlate`.
 
-![תוצאות – רשימת נהגים עם שיוך אוטובוס אחרון](queries-images/צילום%20מסך%202026-05-04%20105421.png)
+![תוצאות – רשימת נהגים עם שיוך אוטובוס אחרון](stage2/queries-images/צילום%20מסך%202026-05-04%20105421.png)
 
 ### 4. לוח נסיעות לנהג – חודש מלא (`screen-8.png`)
 
@@ -257,7 +284,7 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **הערות לשימוש:** יש להחליף את `DriverID`, השנה והחודש בפרמטרים מה־UI (מעבר בין חודשים בלוח).
 
-![תוצאות – לוח נסיעות לנהג, ינואר 2026](queries-images/צילום%20מסך%202026-05-04%20110846.png)
+![תוצאות – לוח נסיעות לנהג, ינואר 2026](stage2/queries-images/צילום%20מסך%202026-05-04%20110846.png)
 
 ## עדכונים בבסיס הנתונים (`UPDATE`)
 
@@ -271,9 +298,9 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **תוצאות ב־pgAdmin:** `SELECT * FROM driver WHERE driverid = 1` לפני והאחרי הרצת ה־`UPDATE`.
 
-![לפני עדכון — שליפת נהג](queries-images/צילום%20מסך%202026-05-04%20112856.png)
+![לפני עדכון — שליפת נהג](stage2/queries-images/צילום%20מסך%202026-05-04%20112856.png)
 
-![אחרי עדכון — שליפת נהג](queries-images/צילום%20מסך%202026-05-04%20113232.png)
+![אחרי עדכון — שליפת נהג](stage2/queries-images/צילום%20מסך%202026-05-04%20113232.png)
 
 ### 2. ביטול נסיעות שהוגדרו כ־«ממתינות לביטול»
 
@@ -285,9 +312,9 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **תוצאות ב־pgAdmin:** שליפת נסיעות עם `Pending Cancellation` (למשל השאילתה ב־`Queries.sql` שמצרפת `DRIVER`, `ROUTE`, `BUS`) — לפני ה־`UPDATE` ואחריו.
 
-![לפני עדכון — נסיעות Pending Cancellation](queries-images/צילום%20מסך%202026-05-04%20113444.png)
+![לפני עדכון — נסיעות Pending Cancellation](stage2/queries-images/צילום%20מסך%202026-05-04%20113444.png)
 
-![אחרי עדכון — מצב הנסיעות לאחר ביטול](queries-images/צילום%20מסך%202026-05-04%20113832.png)
+![אחרי עדכון — מצב הנסיעות לאחר ביטול](stage2/queries-images/צילום%20מסך%202026-05-04%20113832.png)
 
 ### 3. כפל משך משוער למסלולים «העמוסים» ביותר
 
@@ -302,9 +329,9 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **תוצאות ב־pgAdmin:** שליפת המסלולים עם מספר הנסיעות המקסימלי (כמו ה־`WITH trip_counts` ב־`Queries.sql`) — `estimatedduration` לפני הכפל ואחריו.
 
-![לפני עדכון — מסלולים עמוסים ומשך משוער](queries-images/צילום%20מסך%202026-05-04%20114813.png)
+![לפני עדכון — מסלולים עמוסים ומשך משוער](stage2/queries-images/צילום%20מסך%202026-05-04%20114813.png)
 
-![אחרי עדכון — אותה שליפה, estimatedduration כפול 2](queries-images/צילום%20מסך%202026-05-04%20115026.png)
+![אחרי עדכון — אותה שליפה, estimatedduration כפול 2](stage2/queries-images/צילום%20מסך%202026-05-04%20115026.png)
 
 ## מחיקות בבסיס הנתונים (`DELETE`)
 
@@ -316,11 +343,11 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **תוצאות ב־pgAdmin:** שליפה שמציגה נהגים בלי נסיעות, הודעת ביצוע של ה־`DELETE`, וצילום המצב אחרי הפעולה.
 
-![לפני — נהגים ללא נסיעות (בדיקה)](queries-images/צילום%20מסך%202026-05-04%20120539.png)
+![לפני — נהגים ללא נסיעות (בדיקה)](stage2/queries-images/צילום%20מסך%202026-05-04%20120539.png)
 
-![הרצת מחיקת נהגים בלי נסיעות](queries-images/צילום%20מסך%202026-05-04%20120705.png)
+![הרצת מחיקת נהגים בלי נסיעות](stage2/queries-images/צילום%20מסך%202026-05-04%20120705.png)
 
-![אחרי — לאחר המחיקה](queries-images/צילום%20מסך%202026-05-04%20121056.png)
+![אחרי — לאחר המחיקה](stage2/queries-images/צילום%20מסך%202026-05-04%20121056.png)
 
 ### 2. מחיקת אוטובוסים בלי נסיעות
 
@@ -330,11 +357,11 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **תוצאות ב־pgAdmin:** שליפת אוטובוסים בלי נסיעות (`SELECT` עם `NOT EXISTS`), הודעת ביצוע של ה־`DELETE`, ואימות שאין עוד רכבים «לא בשימוש».
 
-![לפני — אוטובוסים ללא נסיעות (בדיקה)](queries-images/צילום%20מסך%202026-05-04%20121056.png)
+![לפני — אוטובוסים ללא נסיעות (בדיקה)](stage2/queries-images/צילום%20מסך%202026-05-04%20121056.png)
 
-![הרצת מחיקת אוטובוסים בלי נסיעות](queries-images/צילום%20מסך%202026-05-04%20121213.png)
+![הרצת מחיקת אוטובוסים בלי נסיעות](stage2/queries-images/צילום%20מסך%202026-05-04%20121213.png)
 
-![אחרי — אותה שליפה, אין תוצאות](queries-images/צילום%20מסך%202026-05-04%20121227.png)
+![אחרי — אותה שליפה, אין תוצאות](stage2/queries-images/צילום%20מסך%202026-05-04%20121227.png)
 
 ### 3. מחיקת נסיעות הקשורות לתחנות «עמוסות» (מעל שתי נסיעות שונות במסלול)
 
@@ -346,60 +373,60 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 **תוצאות ב־pgAdmin:** שליפה לדוגמה של תחנות עם `COUNT(DISTINCT TripID) > 2` לפי אותה לוגיקת צירוף, הודעת הרצה של ה־`DELETE`, ושליפת בדיקה אחרי — ללא תחנות שעומדות בתנאי (או עם פחות תוצאות), בהתאם לנתונים אחרי המחיקה.
 
-![לפני — תחנות «עמוסות» (בדיקה)](queries-images/צילום%20מסך%202026-05-04%20121808.png)
+![לפני — תחנות «עמוסות» (בדיקה)](stage2/queries-images/צילום%20מסך%202026-05-04%20121808.png)
 
-![הרצת מחיקת נסיעות לפי תחנות עמוסות](queries-images/צילום%20מסך%202026-05-04%20121919.png)
+![הרצת מחיקת נסיעות לפי תחנות עמוסות](stage2/queries-images/צילום%20מסך%202026-05-04%20121919.png)
 
-![אחרי — בדיקה חוזרת](queries-images/צילום%20מסך%202026-05-04%20122011.png)
+![אחרי — בדיקה חוזרת](stage2/queries-images/צילום%20מסך%202026-05-04%20122011.png)
 
 ## אילוצים נוספים (`Constraints.sql`)
 
-האילוצים מוגדרים בקובץ [`scripts/Constraints.sql`](./scripts/Constraints.sql) ומיושמים על מסד **קיים** באמצעות `ALTER TABLE` (עם `DROP IF EXISTS` לפני כל `ADD` כדי לאפשר הרצה חוזרת ב־pgAdmin). להלן שלושה אילוצים והדגמות כשל (`INSERT` שמפר את הכלל).
+האילוצים מוגדרים בקובץ [`stage2/scripts/Constraints.sql`](./stage2/scripts/Constraints.sql) ומיושמים על מסד **קיים** באמצעות `ALTER TABLE` (עם `DROP IF EXISTS` לפני כל `ADD` כדי לאפשר הרצה חוזרת ב־pgAdmin). להלן שלושה אילוצים והדגמות כשל (`INSERT` שמפר את הכלל).
 
 ### 1. טווח קיבולת אוטובוס — `bus_capacity_chk`
 
 **סוג:** `CHECK` על `bus.capacity` — הערך חייב להיות **בין 1 ל־200** (מספר מקומות ישיבה ביחידות של המודל).  
 **תועלת:** מונע נתונים לא ריאליים (למשל קיבולת 10,000).
 
-![הפרת אילוץ קיבולת — bus_capacity_chk](constrains-images/bus-capacity-constrain.png)
+![הפרת אילוץ קיבולת — bus_capacity_chk](stage1/constrains-images/bus-capacity-constrain.png)
 
 ### 2. ייחודיות לוחית רישוי — `bus_licenseplate_unique`
 
 **סוג:** `UNIQUE` על `bus.licenseplate` — **אסור** שתי מכוניות עם אותה לוחית.  
 **תועלת:** שלמות נתונים; מניעת כפילות רישוי במערכת.
 
-![הפרת אילוץ ייחודיות — bus_licenseplate_unique](constrains-images/bus-license-plate-unicque-constrain.png)
+![הפרת אילוץ ייחודיות — bus_licenseplate_unique](stage1/constrains-images/bus-license-plate-unicque-constrain.png)
 
 ### 3. טווח משך משוער למסלול — `route_duration_chk`
 
 **סוג:** `CHECK` על `route.estimatedduration` — **בין 1 ל־3000** (דקות).  
 **תועלת:** לא נשמר מסלול עם משך 0 או שלילי, או ערך חריג מדי.
 
-![הפרת אילוץ משך מסלול — route_duration_chk](constrains-images/route-estimated-duration-constrain.png)
+![הפרת אילוץ משך מסלול — route_duration_chk](stage1/constrains-images/route-estimated-duration-constrain.png)
 
 ## אינדקסים (`Index.sql`)
 
-האינדקסים מוגדרים בקובץ [`scripts/Index.sql`](./scripts/Index.sql). להלן השוואה של **זמן הריצה** ב־pgAdmin לפני יצירת כל אינדקס ואחריה, לפי צילומי המסך בתיקייה [`index-images/`](./index-images/).
+האינדקסים מוגדרים בקובץ [`stage2/scripts/Index.sql`](./stage2/scripts/Index.sql). להלן השוואה של **זמן הריצה** ב־pgAdmin לפני יצירת כל אינדקס ואחריה, לפי צילומי המסך בתיקייה [`stage2/index-images/`](./stage2/index-images/).
 
 ### אינדקס 1 — `idx_bus_busid` על `public.bus (busid)`
 
 **שאילתת בדיקה:** `SELECT * FROM public.bus ORDER BY busid ASC;`
 
-![אינדקס ראשון — לפני (`idx_bus_busid`)](index-images/first-before.png)
+![אינדקס ראשון — לפני (`idx_bus_busid`)](stage2/index-images/first-before.png)
 
-![אינדקס ראשון — אחרי (`idx_bus_busid`)](index-images/first-after.png)
+![אינדקס ראשון — אחרי (`idx_bus_busid`)](stage2/index-images/first-after.png)
 
 ### אינדקס 2 — `idx_trip_driverid` על `trip (driverid)`
 
-![אינדקס שני — לפני](index-images/second-before.png)
+![אינדקס שני — לפני](stage2/index-images/second-before.png)
 
-![אינדקס שני — אחרי](index-images/second-after.png)
+![אינדקס שני — אחרי](stage2/index-images/second-after.png)
 
 ### אינדקס 3 — `idx_trip_routeid` על `trip (routeid)`
 
-![אינדקס שלישי — לפני](index-images/third-before.png)
+![אינדקס שלישי — לפני](stage2/index-images/third-before.png)
 
-![אינדקס שלישי — אחרי](index-images/third-after.png)
+![אינדקס שלישי — אחרי](stage2/index-images/third-after.png)
 
 ## תועלות האילוצים והאינדקסים
 
@@ -415,11 +442,11 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 להריץ את כל הבלוק ברצף אחד ב־Query Tool.
 
-![לפני — מצב לפני הטרנזקציה](rollback-commit-images/before%20%282%29.png)
+![לפני — מצב לפני הטרנזקציה](stage2/rollback-commit-images/before%20%282%29.png)
 
-![בתוך הטרנזקציה — אחרי UPDATE, לפני ROLLBACK](rollback-commit-images/inProces.png)
+![בתוך הטרנזקציה — אחרי UPDATE, לפני ROLLBACK](stage2/rollback-commit-images/inProces.png)
 
-![אחרי `ROLLBACK` — הנתונים חזרו](rollback-commit-images/after%20%282%29.png)
+![אחרי `ROLLBACK` — הנתונים חזרו](stage2/rollback-commit-images/after%20%282%29.png)
 
 ## טרנזקציה עם `COMMIT` 
 
@@ -427,11 +454,11 @@ https://ais-pre-77dfnjtpiym64oo7ugmese-644835111717.europe-west2.run.app/
 
 להריץ את כל הקטע בבת אחת ב־Query Tool. אחרי ההגשה אפשר להחזיר טלפון ידנית אם צריך.
 
-![לפני — מצב לפני COMMIT](rollback-commit-images/before.png)
+![לפני — מצב לפני COMMIT](stage2/rollback-commit-images/before.png)
 
-![בתוך הטרנזקציה — אחרי UPDATE, לפני/עם סיום COMMIT](rollback-commit-images/inProcess.png)
+![בתוך הטרנזקציה — אחרי UPDATE, לפני/עם סיום COMMIT](stage2/rollback-commit-images/inProcess.png)
 
-![אחרי — השינוי נשמר לאחר COMMIT](rollback-commit-images/after.png)
+![אחרי — השינוי נשמר לאחר COMMIT](stage2/rollback-commit-images/after.png)
 
 ---
 
@@ -584,7 +611,7 @@ ALTER TABLE ROUTESTOP RENAME TO ROUTESTOP_OLD;
 
 ## הרצת שאילתות שלב ב על הבסיס המשולב
 
-לאחר האינטגרציה עודכנו שמות העמודות ב-[`scripts/Queries.sql`](./scripts/Queries.sql) (למשל `driverid`, `trip_date`, `route_name`). השאילתות הורצו מחדש על הבסיס המשולב.
+לאחר האינטגרציה עודכנו שמות העמודות ב-[`stage2/scripts/Queries.sql`](./stage2/scripts/Queries.sql) (למשל `driverid`, `trip_date`, `route_name`). השאילתות הורצו מחדש על הבסיס המשולב.
 
 **דוגמה — לוח נסיעות לנהג (מסך 8):** שאילתה עם `JOIN` בין `trip` ל-`route`, סינון לפי `driver_id`, שנה וחודש מתוך `trip_date`, ומיון לפי `departure_time`.
 
@@ -744,8 +771,8 @@ WHERE stop_id = 10;
 | DSD לאחר אינטגרציה | [`stage3/images/newIntagratedDSD.png`](./stage3/images/newIntagratedDSD.png) |
 | פקודות אינטגרציה | [`stage3/integrate.sql`](./stage3/integrate.sql) |
 | מבטים ושאילתות | [`stage3/views.sql`](./stage3/views.sql) |
-| גיבוי מעודכן | [`backup3`](./backup3) |
-| שאילתות שלב ב (מעודכנות) | [`scripts/Queries.sql`](./scripts/Queries.sql) |
+| גיבוי מעודכן | [`stage3/backup3`](./stage3/backup3) |
+| שאילתות שלב ב (מעודכנות) | [`stage2/scripts/Queries.sql`](./stage2/scripts/Queries.sql) |
 
 **TAG ב-Git:** יש ליצור tag לשלב ג' לפי הוראות הקורס.
 
@@ -764,3 +791,273 @@ WHERE stop_id = 10;
 הבסיס המשולב תומך הן בניהול נהגים ואוטובוסים והן במודל מסלולים, תחנות ואזורים — ומאפשר המשך פיתוח על תשתית אחת.
 
 ---
+
+# שלב ד — תכנות PL/pgSQL
+
+## תוכן עניינים
+
+1. [מבוא](#מבוא-2)
+2. [קבצי הפרויקט](#קבצי-הפרויקט)
+3. [תוכנית ראשית 1 — Driver Analysis & Route Update](#תוכנית-ראשית-1--driver-analysis--route-update)
+4. [תוכנית ראשית 2 — Route Maintenance & Driver Assignment](#תוכנית-ראשית-2--route-maintenance--driver-assignment)
+5. [טריגר 1 — `trg_trip_update`](#טריגר-1--trg_trip_update)
+6. [טריגר 2 — `trg_validate_driver`](#טריגר-2--trg_validate_driver)
+7. [אלמנטי תכנות](#אלמנטי-תכנות)
+8. [קבצי הגשה](#קבצי-הגשה-1)
+9. [סיכום](#סיכום-2)
+
+---
+
+## מבוא
+
+בשלב זה נכתבו תוכניות PL/pgSQL על **בסיס הנתונים המשולב** משלב ג'. התוכניות אינן טריוויאליות — כוללות בדיקות תקינות, עדכוני DML, הסתעפויות, לולאות וטיפול בחריגות. הקוד מחולק לקבצים נפרדים בתיקיית [`stage4/`](./stage4/).
+
+---
+
+## קבצי הפרויקט
+
+| קובץ | תוכן |
+|------|------|
+| [`stage4/functions.sql`](./stage4/functions.sql) | 2 פונקציות + דוגמאות הרצה |
+| [`stage4/procedure.sql`](./stage4/procedure.sql) | 2 פרוצדורות + דוגמאות הרצה |
+| [`stage4/triggers.sql`](./stage4/triggers.sql) | 2 טריגרים (פונקציות טריגר + CREATE TRIGGER) |
+| [`stage4/main.sql`](./stage4/main.sql) | 2 תוכניות ראשיות — מזמנות פונקציות ופרוצדורות |
+
+---
+
+## תוכנית ראשית 1 — Driver Analysis & Route Update
+
+**קובץ:** [`stage4/main.sql`](./stage4/main.sql)
+
+**תיאור:** תוכנית ראשית המריצה בתוך טרנזקציה (`BEGIN` … `COMMIT`) ניתוח נהג `1131` — ספירת נסיעות חודשיות וניתוח פעילות לפי אזור — ולאחר מכן עדכון סטטיסטיקות מסלולים (`update_route_statistics`). בסוף מוצגים `route_id` ו-`estimated_duration_minutes`.
+
+**קוד מלא:**
+
+```sql
+BEGIN;
+
+SELECT get_driver_monthly_trips(1131, 1, 2026);
+
+SELECT *
+FROM get_driver_top_region_activity(1131);
+
+CALL update_route_statistics();
+
+SELECT route_id, estimated_duration_minutes
+FROM route;
+
+COMMIT;
+```
+
+### שלב 1 — `get_driver_monthly_trips`
+
+**פונקציה:** [`stage4/functions.sql`](./stage4/functions.sql) — מחזירה מספר נסיעות של נהג בחודש ובשנה; בודקת שהנהג קיים, כוללת `EXCEPTION`.
+
+```sql
+SELECT get_driver_monthly_trips(1131, 1, 2026);
+```
+
+![תוכנית ראשית 1 — ספירת נסיעות חודשיות לנהג 1131](stage4/images/function1.png)
+
+### שלב 2 — `get_driver_top_region_activity`
+
+**פונקציה:** [`stage4/functions.sql`](./stage4/functions.sql) — מחזירה את האזור הפעיל ביותר של הנהג, מספר נסיעות, מספר מסלולים וסטטוס פעילות.
+
+```sql
+SELECT *
+FROM get_driver_top_region_activity(1131);
+```
+
+![תוכנית ראשית 1 — ניתוח פעילות לפי אזור לנהג 1131](stage4/images/function2.png)
+
+### שלב 3 — `update_route_statistics`
+
+**פרוצדורה:** [`stage4/procedure.sql`](./stage4/procedure.sql) — עוברת על כל המסלולים ב-**cursor explicit** (`OPEN` / `FETCH` / `CLOSE`), סופרת נסיעות, מעדכנת `estimated_duration_minutes` לפי כמות הנסיעות, ומחזירה **Ref Cursor** (`OUT updated_routes`) עם המסלולים המעודכנים.
+
+```sql
+CALL update_route_statistics();
+
+SELECT route_id, estimated_duration_minutes
+FROM route;
+```
+
+**שימוש ב-Ref Cursor:**
+
+```sql
+DO $$
+DECLARE
+    cur REFCURSOR;
+    rec RECORD;
+BEGIN
+    CALL update_route_statistics(cur);
+    LOOP
+        FETCH cur INTO rec;
+        EXIT WHEN NOT FOUND;
+        RAISE NOTICE 'route % -> % minutes', rec.route_id, rec.estimated_duration_minutes;
+    END LOOP;
+    CLOSE cur;
+END $$;
+```
+
+**הוכחת הרצה — לפני:**
+
+![תוכנית ראשית 1 — estimated_duration_minutes לפני update_route_statistics](stage4/images/beforeProcedure2.png)
+
+**הוכחת הרצה — CALL + Ref Cursor:**
+
+![תוכנית ראשית 1 — CALL update_route_statistics ו-Ref Cursor](stage4/images/curserExample.png)
+
+**פלט:** `CALL` מחזיר `<unnamed portal>` — Ref Cursor עם המסלולים המעודכנים; ניתן גם לשלוף בלוק `DO $$` (ראו [`stage4/procedure.sql`](./stage4/procedure.sql)).
+
+**הוכחת הרצה — אחרי:**
+
+![תוכנית ראשית 1 — estimated_duration_minutes אחרי update_route_statistics](stage4/images/afterProcedur2.png)
+
+**פלט:** `estimated_duration_minutes` משתנה לפי כמות הנסיעות על המסלול — `+2` (1–5 נסיעות), `−2` (6+), `−1` (0 נסיעות, מינימום 1).
+
+---
+
+## תוכנית ראשית 2 — Route Maintenance & Driver Assignment
+
+**קובץ:** [`stage4/main.sql`](./stage4/main.sql)
+
+**תיאור:** תוכנית ראשית המריצה בתוך טרנזקציה ניתוח נהג `1131` (שתי הפונקציות), יוצרת 10 נסיעות אקראיות (`create_random_trips`), ומציגה את הנסיעות שנוצרו.
+
+**קוד מלא:**
+
+```sql
+BEGIN;
+
+SELECT get_driver_monthly_trips(1131, 1, 2026);
+
+SELECT *
+FROM get_driver_top_region_activity(1131);
+
+CALL create_random_trips(10);
+
+SELECT trip_id, driver_id, route_id
+FROM trip;
+
+COMMIT;
+```
+
+### שלב 1 — `get_driver_monthly_trips`
+
+```sql
+SELECT get_driver_monthly_trips(1131, 1, 2026);
+```
+
+![תוכנית ראשית 2 — ספירת נסיעות חודשיות לנהג 1131](stage4/images/function1.png)
+
+### שלב 2 — `get_driver_top_region_activity`
+
+```sql
+SELECT *
+FROM get_driver_top_region_activity(1131);
+```
+
+![תוכנית ראשית 2 — ניתוח פעילות לפי אזור לנהג 1131](stage4/images/function2.png)
+
+### שלב 3 — `create_random_trips`
+
+**פרוצדורה:** [`stage4/procedure.sql`](./stage4/procedure.sql) — יוצרת `p_count` נסיעות עם נהג, מסלול, אוטובוס ו-`plate_number` אקראיים; משתמשת ב-`WHILE`, `INSERT` ו-`EXCEPTION`.
+
+```sql
+CALL create_random_trips(10);
+
+SELECT trip_id, driver_id, route_id
+FROM trip;
+```
+
+**הוכחת הרצה — לפני:**
+
+![תוכנית ראשית 2 — מצב לפני יצירת נסיעות](stage4/images/beforeProcedure1.png)
+
+**הוכחת הרצה — הרצה:**
+
+![תוכנית ראשית 2 — הרצת CALL create_random_trips(10)](stage4/images/runProcedure1.png)
+
+**הוכחת הרצה — אחרי:**
+
+![תוכנית ראשית 2 — 10 נסיעות חדשות ב-trip](stage4/images/afterProcedure1.png)
+
+---
+
+## טריגר 1 — `trg_trip_update`
+
+**תיאור:** טריגר **AFTER UPDATE** על טבלת `trip`. בעת שינוי `route_id` מדפיס (`RAISE NOTICE`) את מזהה הנסיעה, המסלול הישן והחדש — לצורך audit.
+
+**קוד:** [`stage4/triggers.sql`](./stage4/triggers.sql)
+
+```sql
+UPDATE trip
+SET route_id = 244
+WHERE trip_id = 1;
+```
+
+**הוכחת הרצה:**
+
+![טריגר 1 — הודעת audit בעדכון route_id](stage4/images/trigger1.png)
+
+**פלט:** הודעת `NOTICE` עם `Trip updated: ID ..., Old Route ..., New Route ...`.
+
+---
+
+## טריגר 2 — `trg_validate_driver`
+
+**תיאור:** טריגר **BEFORE INSERT** על `trip`. בודק ש-`driver_id` קיים בטבלת `driver`; אם לא — זורק `RAISE EXCEPTION` ומונע הכנסה.
+
+**קוד:** [`stage4/triggers.sql`](./stage4/triggers.sql)
+
+```sql
+INSERT INTO trip (trip_id, trip_date, departure_time, available_seats, route_id, driver_id, bus_id)
+VALUES (999999, CURRENT_DATE, 800, 40, 1, 99999, 1);
+```
+
+**הוכחת הרצה:**
+
+![טריגר 2 — חריגה על driver_id לא קיים](stage4/images/trigger2.png)
+
+**פלט:** שגיאה `Driver 99999 does not exist` — ההכנסה נחסמת.
+
+---
+
+## אלמנטי תכנות
+
+| אלמנט | פונקציה 1 | פונקציה 2 | פרוצדורה 1 | פרוצדורה 2 | טריגר 1 | טריגר 2 |
+|--------|-----------|-----------|------------|------------|---------|---------|
+| הסתעפויות (`IF/ELSIF`) | ✅ | ✅ | — | ✅ | — | ✅ |
+| לולאות | — | — | ✅ `WHILE` | ✅ `FOR` | — | — |
+| Cursor (explicit) | — | — | — | ✅ | — | — |
+| Cursor (implicit) | — | — | — | — | — | — |
+| Ref Cursor | — | — | — | ✅ | — | — |
+| DML (`INSERT`/`UPDATE`) | — | — | ✅ `INSERT` | ✅ `UPDATE` | — | — |
+| Exception | ✅ | — | ✅ | ✅ | — | ✅ |
+| רשומות (`RECORD`) | — | — | — | ✅ | — | — |
+| `RETURN QUERY` | — | ✅ | — | — | — | — |
+| `OLD` / `NEW` | — | — | — | — | ✅ | ✅ |
+
+---
+
+## קבצי הגשה
+
+| קובץ | מיקום |
+|------|--------|
+| פונקציות | [`stage4/functions.sql`](./stage4/functions.sql) |
+| פרוצדורות | [`stage4/procedure.sql`](./stage4/procedure.sql) |
+| טריגרים | [`stage4/triggers.sql`](./stage4/triggers.sql) |
+| תוכניות ראשיות | [`stage4/main.sql`](./stage4/main.sql) |
+| גיבוי מעודכן | [`stage4/backup4`](./stage4/backup4) |
+| דוח (קובץ זה) | [`README.md`](./README.md) |
+
+**TAG ב-Git:** יש ליצור tag לשלב ד' לפי הוראות הקורס.
+
+---
+
+## סיכום
+
+בשלב ד' בוצעו:
+
+* 2 תוכניות ראשיות ב-[`stage4/main.sql`](./stage4/main.sql) — כל אחת מפעילה 2 פונקציות ופרוצדורה אחת
+* 2 טריגרים — audit על UPDATE וולידציה על INSERT
+* תיעוד הרצה מלא לפי שלבי `main.sql` (כולל `update_route_statistics`)
