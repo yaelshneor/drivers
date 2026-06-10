@@ -861,6 +861,38 @@ interface TripCardProps {
   onSelect?: () => void;
 }
 
+function StopsSection({ stops }: { stops: string[] }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!stops.length) {
+    return <p className="text-slate-400 text-sm">אין תחנות</p>;
+  }
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setExpanded((v) => !v);
+        }}
+        className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+      >
+        {expanded ? <ChevronLeft size={16} className="rotate-90" /> : <ChevronLeft size={16} className="-rotate-90" />}
+        <span>{stops.length} תחנות</span>
+        <span className="text-slate-400 font-normal">{expanded ? '· הסתר' : '· הצג הכל'}</span>
+      </button>
+      {expanded && (
+        <ol className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+          {stops.map((stop, i) => (
+            <li key={i} className="text-xs text-slate-600 bg-slate-50 px-2 py-1.5 rounded-md">
+              {i + 1}. {stop}
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
 function TripCard({ trip, isDriverView, onRequestCancellation, driverName, onSelect }: TripCardProps) {
   const getStatusStyle = () => {
     switch (trip.status) {
@@ -921,14 +953,7 @@ function TripCard({ trip, isDriverView, onRequestCancellation, driverName, onSel
           </div>
           <div className="space-y-2">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">תחנות</span>
-            <div className="flex flex-wrap gap-1">
-              {trip.stops.map((stop, i) => (
-                <span key={i} className="text-xs bg-slate-100 px-2 py-1 rounded-md text-slate-600">
-                  {stop}
-                  {i < trip.stops.length - 1 && <span className="mr-1">←</span>}
-                </span>
-              ))}
-            </div>
+            <StopsSection stops={trip.stops} />
           </div>
           <div className="space-y-2">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">פרטי רכב</span>
