@@ -4,7 +4,7 @@
 
 /* screen-7.png */
 -- שליפת כמות הנסיעות של כל נהג עבור מסך שבע סיכום נסיעות
---version 1
+--version 1 !!!
 SELECT 
     d.driverid,
     d.fullname,
@@ -51,7 +51,7 @@ AND t.route_id IN (
 );
 
 /* screen-9.png */
--- מציגה למנהל את כל הבקשות לביטול 
+-- מציגה למנהל את כל הבקשות לביטול !!!
 --version 1
 SELECT
     t.trip_id,
@@ -79,7 +79,7 @@ SELECT
 FROM trip t;
 
 /* screen-3.png */
---מסך נסיעות כללי כל הנסיעות העתידיות 
+--מסך נסיעות כללי כל הנסיעות העתידיות !!!
 --version 1
 SELECT
     t.trip_id,
@@ -109,7 +109,7 @@ FROM trip t
 WHERE t.trip_date >= CURRENT_DATE;
 
 /* screen-1.png */
--- מציגה פרטי נהג במסך ראשי
+-- מציגה פרטי נהג במסך ראשי !!!
 SELECT 
     driverid,
     fullname,
@@ -117,7 +117,7 @@ SELECT
 FROM driver
 WHERE driverid = 1002;
 
--- היסטוריית נסיעות (לפני היום) 
+-- היסטוריית נסיעות (לפני היום) !!!
 SELECT
     t.trip_id,
     t.trip_date,
@@ -157,7 +157,7 @@ FROM (
 ORDER BY DriverName;
 
 /* screen-8.png */
--- לוח נסיעות לנהג (חודש מלא) 
+-- לוח נסיעות לנהג (חודש מלא) !!!
 SELECT
     t.trip_id,
     t.trip_date AS TripDay,

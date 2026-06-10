@@ -25,7 +25,7 @@ CREATE TABLE ROUTE_NEW
     end_location VARCHAR(50) NOT NULL,
     estimated_duration_minutes INT NOT NULL,
     total_distance_km INT NOT NULL,
-    created_date INT NOT NULL,
+    created_date DATE NOT NULL,
     region_id INT NOT NULL,
     PRIMARY KEY (route_id),
     FOREIGN KEY (region_id) REFERENCES REGION(region_id)
@@ -52,9 +52,9 @@ SELECT
     StartLocation,
     EndLocation,
     EstimatedDuration,
-    NULL,
-    NULL,
-    NULL
+    (100 + FLOOR(RANDOM() * 200)::INT),
+    (DATE '2025-10-24' + FLOOR(RANDOM() * 8)::INT)::DATE,
+    ROW_NUMBER() OVER (ORDER BY RouteID)
 FROM ROUTE_OLD
 UNION ALL
 SELECT
@@ -103,7 +103,7 @@ SELECT
     Address,
     Latitude,
     Longitude,
-    NULL
+    (SELECT MIN(site_name) FROM SITE)
 FROM STOP_OLD
 UNION ALL
 SELECT
@@ -122,7 +122,7 @@ FROM STOP;
 CREATE TABLE ROUTE_STOP_NEW
 (
     stop_order INT NOT NULL,
-    estimated_arrival_time INT NOT NULL,
+    estimated_arrival_time TIME NOT NULL,
     route_id INT NOT NULL,
     stop_id INT NOT NULL,
     PRIMARY KEY (route_id, stop_id),
@@ -143,7 +143,7 @@ INSERT INTO ROUTE_STOP_NEW
 )
 SELECT
     StopOrder,
-    NULL,
+    (make_time(6 + FLOOR(RANDOM() * 15)::INT, FLOOR(RANDOM() * 60)::INT, 0)),
     RouteID,
     StopID
 FROM ROUTESTOP_OLD
@@ -170,7 +170,7 @@ CREATE TABLE TRIP_NEW
     trip_id INT PRIMARY KEY,
     driver_id INT,
     bus_id INT,
-    departure_time INT,
+    departure_time TIME,
     available_seats INT,
     plate_number INT,
     route_id INT,
@@ -196,17 +196,17 @@ SELECT
     TripID,
     DriverID,
     BusID,
-    NULL,
-    NULL,
-    NULL,
+    (make_time(6 + FLOOR(RANDOM() * 15)::INT, FLOOR(RANDOM() * 60)::INT, 0)),
+    (10 + FLOOR(RANDOM() * 41)::INT),
+    (SELECT plate_number FROM vehicle ORDER BY RANDOM() LIMIT 1),
     RouteID,
-    TripDate
+    TripDate::DATE
 FROM TRIP_OLD
 UNION ALL
 SELECT
     trip_id,
-    NULL,
-    NULL,
+    (SELECT driverid FROM driver ORDER BY RANDOM() LIMIT 1),
+    (SELECT busid FROM bus ORDER BY RANDOM() LIMIT 1),
     departure_time,
     available_seats,
     plate_number,

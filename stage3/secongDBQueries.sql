@@ -175,7 +175,7 @@ WHERE v.plate_number IN (
 ORDER BY v.plate_number;
 
 
--- SELECT 8: ימים וחודשים עמוסים בנסיעות
+-- SELECT 8: ימים וחודשים עמוסים בנסיעות !!!
 SELECT
     EXTRACT(YEAR FROM trip_date) AS trip_year,
     EXTRACT(MONTH FROM trip_date) AS trip_month,
