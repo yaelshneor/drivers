@@ -30,6 +30,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Driver, Trip, CancellationRequest } from './types';
 import { mockDrivers, mockTrips } from './mockData';
+import { fetchDriverById } from './api/drivers';
+import { ApiError } from './api/client';
 
 type View = 'login' | 'driver' | 'manager';
 type ManagerTab = 'drivers' | 'schedule' | 'requests';
@@ -51,14 +53,22 @@ export default function App() {
   const [selectedTripDetails, setSelectedTripDetails] = useState<Trip | null>(null);
   const [selectedDriverDetails, setSelectedDriverDetails] = useState<Driver | null>(null);
 
-  const handleDriverLogin = (id: string) => {
-    const driver = drivers.find(d => d.id === id);
-    if (driver) {
+  const handleDriverLogin = async (id: string) => {
+    if (!id.trim()) {
+      alert('יש להזין מזהה נהג');
+      return;
+    }
+    try {
+      const driver = await fetchDriverById(id.trim());
       setCurrentDriver(driver);
       setView('driver');
       setDriverViewMode('list');
-    } else {
-      alert('מזהה נהג לא נמצא');
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        alert('מזהה נהג לא נמצא');
+      } else {
+        alert('שגיאה בחיבור לשרת — ודאי שה-API וה-DB פעילים');
+      }
     }
   };
 

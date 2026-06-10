@@ -1,50 +1,60 @@
-# שלב ה — הרצת הממשק (React)
+# שלב ה — הרצה
+
+## מבנה
+
+```
+stage5/
+  server/          ← Backend (Express + PostgreSQL)
+    config.ts
+    db/pool.ts
+    routes/
+    index.ts
+  src/
+    api/           ← קריאות API מהפרונט
+    App.tsx        ← UI
+```
 
 ## דרישות
 
-- **Node.js 18+** (חובה — Vite 6 לא עובד על Node 10)
-- npm
+- Node.js **18+**
+- Docker + PostgreSQL (`DB_NAME_SECRET=stage3` ב-`.env` בשורש הפרויקט)
 
-בדיקה:
-
-```bash
-node -v
-```
-
-אם מוצג `v10.x` — יש לעדכן Node מ-[https://nodejs.org](https://nodejs.org) (LTS) ולפתוח מחדש את הטרמינל.
-
-## התקנה והרצה
+## התקנה
 
 ```bash
 cd stage5
 npm install
-npm run dev
 ```
 
-פתחי בדפדפן: **http://localhost:3000**
+## הרצה (2 טרמינלים)
 
-## בדיקה עם Mock (לפני חיבור DB)
-
-הפרונט כרגע עובד עם נתונים מ-[`src/mockData.ts`](./src/mockData.ts):
-
-| פעולה | ערך לדוגמה |
-|--------|------------|
-| כניסת נהג | מזהה `101`, `102` או `103` |
-| כניסת מנהל | כפתור «כניסת מנהל» |
-
-אם המסכים נטענים — הפרונט תקין. אחר כך נחבר ל-PostgreSQL.
-
-## שלב הבא — חיבור DB (מסך מסך)
-
-1. **Backend** — Express + `pg` (API ב-`stage5/server/`)
-2. **מסך כניסה / נהגים** — שליפת `driver` מ-DB
-3. **נסיעות** — `trip` + JOIN לשמות (route, bus, driver)
-4. **מנהל** — CRUD + שאילתות משלב ב' + פונקציות/פרוצדורות משלב ד'
-
-Docker (PostgreSQL):
+**טרמינל 1 — API + DB:**
 
 ```bash
 docker compose up -d
+cd stage5
+npm run dev:server
 ```
 
-קובץ `.env` בשורש הפרויקט: `DB_USER_SECRET`, `DB_PASSWORD_SECRET`, `DB_NAME_SECRET`.
+בדיקה: http://localhost:3001/api/health  
+צריך: `{"status":"ok","database":"connected"}`
+
+**טרמינל 2 — פרונט:**
+
+```bash
+cd stage5
+npm run dev
+```
+
+פתחי: http://localhost:3000
+
+## כניסת נהג (מחובר ל-DB)
+
+הזיני `driverid` אמיתי מהטבלה `driver` (למשל `1001`, `1131`).
+
+## API
+
+| Method | Path | תיאור |
+|--------|------|--------|
+| GET | `/api/health` | בדיקת חיבור DB |
+| GET | `/api/drivers/:id` | שליפת נהג לפי מזהה |
