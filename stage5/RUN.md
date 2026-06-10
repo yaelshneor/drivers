@@ -57,4 +57,22 @@ npm run dev
 | Method | Path | תיאור |
 |--------|------|--------|
 | GET | `/api/health` | בדיקת חיבור DB |
+| GET | `/api/drivers` | רשימת נהגים |
 | GET | `/api/drivers/:id` | שליפת נהג לפי מזהה |
+| GET | `/api/buses` | רשימת אוטובוסים (לשיבוץ) |
+| GET | `/api/routes` | רשימת מסלולים (לשיבוץ) |
+| GET | `/api/trips` | רשימת נסיעות |
+| POST | `/api/trips` | שיבוץ נסיעה |
+
+## אם מופיע `Cannot GET /api/buses`
+
+השרver הישן עדיין רץ. עצרי אותו והפעילי מחדש:
+
+```powershell
+netstat -ano | findstr :3001
+taskkill /PID <מספר_התהליך> /F
+cd stage5
+npm run dev:server
+```
+
+בדיקה: http://localhost:3001/api/buses — צריך JSON, לא HTML.
