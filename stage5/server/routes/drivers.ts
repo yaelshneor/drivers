@@ -55,18 +55,21 @@ driversRouter.get('/:id', async (req, res) => {
 });
 
 driversRouter.post('/', async (req, res) => {
-  const { id, name, phone, licensetype, licenseType } = req.body ?? {};
-  const type = licensetype ?? licenseType;
+  const { id, name, phone } = req.body ?? {};
+  const type = String(req.body?.licensetype ?? req.body?.licenseType ?? '').trim();
   const driverid = Number.parseInt(String(id), 10);
-  if (Number.isNaN(driverid) || !name || !type || !isValidLicenseType(type)) {
-    return res.status(400).json({ error: 'נתונים לא תקינים' });
+  if (Number.isNaN(driverid) || !name?.trim() || !type) {
+    return res.status(400).json({ error: 'נתונים לא תקינים — יש למלא שם, מזהה וסוג רישיון' });
+  }
+  if (!isValidLicenseType(type)) {
+    return res.status(400).json({ error: 'סוג רישיון לא תקין' });
   }
 
   try {
     await query(
       `INSERT INTO driver (driverid, fullname, phone, licensetype)
        VALUES ($1, $2, $3, $4)`,
-      [driverid, name, phone ?? null, type],
+      [driverid, name.trim(), phone?.trim() || null, type],
     );
     const result = await query<DriverRow>(
       `${DRIVER_SELECT} WHERE driverid = $1`,
@@ -81,17 +84,20 @@ driversRouter.post('/', async (req, res) => {
 
 driversRouter.put('/:id', async (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
-  const { name, phone, licensetype, licenseType } = req.body ?? {};
-  const type = licensetype ?? licenseType;
-  if (Number.isNaN(id) || !name || !type || !isValidLicenseType(type)) {
-    return res.status(400).json({ error: 'נתונים לא תקינים' });
+  const { name, phone } = req.body ?? {};
+  const type = String(req.body?.licensetype ?? req.body?.licenseType ?? '').trim();
+  if (Number.isNaN(id) || !name?.trim() || !type) {
+    return res.status(400).json({ error: 'נתונים לא תקינים — יש למלא שם וסוג רישיון' });
+  }
+  if (!isValidLicenseType(type)) {
+    return res.status(400).json({ error: 'סוג רישיון לא תקין' });
   }
 
   try {
     const updated = await query(
       `UPDATE driver SET fullname = $1, phone = $2, licensetype = $3
        WHERE driverid = $4`,
-      [name, phone ?? null, type, id],
+      [name.trim(), phone?.trim() || null, type, id],
     );
     if (updated.rowCount === 0) {
       return res.status(404).json({ error: 'מזהה נהג לא נמצא' });

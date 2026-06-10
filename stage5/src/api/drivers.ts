@@ -19,6 +19,7 @@ export function createDriver(driver: Driver): Promise<Driver> {
     name: driver.name,
     phone: driver.phone,
     licensetype: driver.licensetype,
+    licenseType: driver.licensetype,
   });
 }
 
@@ -27,6 +28,7 @@ export function updateDriverApi(driver: Driver): Promise<Driver> {
     name: driver.name,
     phone: driver.phone,
     licensetype: driver.licensetype,
+    licenseType: driver.licensetype,
   });
 }
 
