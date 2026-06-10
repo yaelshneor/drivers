@@ -29,8 +29,14 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Driver, Trip, CancellationRequest } from './types';
-import { mockDrivers, mockTrips } from './mockData';
-import { fetchDriverById } from './api/drivers';
+import {
+  fetchDriverById,
+  fetchDrivers,
+  createDriver,
+  updateDriverApi,
+  deleteDriverApi,
+} from './api/drivers';
+import { fetchTrips, createTrip, updateTripStatus } from './api/trips';
 import { ApiError } from './api/client';
 
 type View = 'login' | 'driver' | 'manager';
@@ -40,8 +46,8 @@ type DriverViewMode = 'list' | 'calendar' | 'stats';
 export default function App() {
   const [view, setView] = useState<View>('login');
   const [currentDriver, setCurrentDriver] = useState<Driver | null>(null);
-  const [drivers, setDrivers] = useState<Driver[]>(mockDrivers);
-  const [trips, setTrips] = useState<Trip[]>(mockTrips);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [managerTab, setManagerTab] = useState<ManagerTab>('drivers');
   const [driverViewMode, setDriverViewMode] = useState<DriverViewMode>('list');
   const [managerScheduleMode, setManagerScheduleMode] = useState<DriverViewMode>('list');
@@ -53,14 +59,23 @@ export default function App() {
   const [selectedTripDetails, setSelectedTripDetails] = useState<Trip | null>(null);
   const [selectedDriverDetails, setSelectedDriverDetails] = useState<Driver | null>(null);
 
+  const patchTrip = (updated: Trip) => {
+    setTrips((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    setSelectedTripDetails((prev) => (prev?.id === updated.id ? updated : prev));
+  };
+
   const handleDriverLogin = async (id: string) => {
     if (!id.trim()) {
       alert('יש להזין מזהה נהג');
       return;
     }
     try {
-      const driver = await fetchDriverById(id.trim());
+      const [driver, driverTrips] = await Promise.all([
+        fetchDriverById(id.trim()),
+        fetchTrips(id.trim()),
+      ]);
       setCurrentDriver(driver);
+      setTrips(driverTrips);
       setView('driver');
       setDriverViewMode('list');
     } catch (err) {
@@ -72,57 +87,99 @@ export default function App() {
     }
   };
 
+  const handleManagerLogin = async () => {
+    try {
+      const [driversData, tripsData] = await Promise.all([fetchDrivers(), fetchTrips()]);
+      setDrivers(driversData);
+      setTrips(tripsData);
+      setView('manager');
+    } catch {
+      alert('שגיאה בחיבור לשרת — ודאי שה-API וה-DB פעילים');
+    }
+  };
+
   const handleLogout = () => {
     setView('login');
     setCurrentDriver(null);
+    setTrips([]);
+    setDrivers([]);
   };
 
-  const addDriver = (driver: Driver) => {
-    setDrivers([...drivers, driver]);
-    setIsDriverFormOpen(false);
-  };
-
-  const updateDriver = (updatedDriver: Driver) => {
-    setDrivers(drivers.map(d => d.id === updatedDriver.id ? updatedDriver : d));
-    setEditingDriver(null);
-    setIsDriverFormOpen(false);
-  };
-
-  const deleteDriver = (id: string) => {
-    if (confirm('האם אתה בטוח שברצונך למחוק נהג זה?')) {
-      setDrivers(drivers.filter(d => d.id !== id));
-      setTrips(trips.filter(t => t.driverId !== id));
+  const addDriver = async (driver: Driver) => {
+    try {
+      const created = await createDriver(driver);
+      setDrivers((prev) => [...prev, created]);
+      setIsDriverFormOpen(false);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה בהוספת נהג');
     }
   };
 
-  const assignTrip = (trip: Trip) => {
-    setTrips([...trips, { ...trip, id: `t${trips.length + 1}`, status: 'scheduled' }]);
-    setIsAssignmentFormOpen(false);
-  };
-
-  const requestCancellation = (tripId: string) => {
-    setTrips(trips.map(t => t.id === tripId ? { ...t, status: 'pending_cancellation' } : t));
-    if (selectedTripDetails?.id === tripId) {
-      setSelectedTripDetails({ ...selectedTripDetails, status: 'pending_cancellation' });
+  const updateDriver = async (updatedDriver: Driver) => {
+    try {
+      const saved = await updateDriverApi(updatedDriver);
+      setDrivers((prev) => prev.map((d) => (d.id === saved.id ? saved : d)));
+      setEditingDriver(null);
+      setIsDriverFormOpen(false);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה בעדכון נהג');
     }
   };
 
-  const handleCancellationResponse = (tripId: string, approve: boolean) => {
-    setTrips(trips.map(t => {
-      if (t.id === tripId) {
-        return { ...t, status: approve ? 'cancelled' : 'cancellation_rejected' };
-      }
-      return t;
-    }));
-    if (selectedTripDetails?.id === tripId) {
-      setSelectedTripDetails({ ...selectedTripDetails, status: approve ? 'cancelled' : 'cancellation_rejected' });
+  const deleteDriver = async (id: string) => {
+    if (!confirm('האם אתה בטוח שברצונך למחוק נהג זה?')) return;
+    try {
+      await deleteDriverApi(id);
+      setDrivers((prev) => prev.filter((d) => d.id !== id));
+      setTrips((prev) => prev.filter((t) => t.driverId !== id));
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה במחיקת נהג');
     }
   };
 
-  const acknowledgeRejection = (tripId: string) => {
-    setTrips(trips.map(t => t.id === tripId ? { ...t, status: 'scheduled' } : t));
-    if (selectedTripDetails?.id === tripId) {
-      setSelectedTripDetails({ ...selectedTripDetails, status: 'scheduled' });
+  const assignTrip = async (trip: Trip) => {
+    try {
+      const created = await createTrip({
+        driverId: trip.driverId,
+        date: trip.date,
+        time: trip.time,
+        routeName: trip.route,
+        destination: trip.destination,
+      });
+      setTrips((prev) => [...prev, created]);
+      setIsAssignmentFormOpen(false);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה בשיבוץ נסיעה');
+    }
+  };
+
+  const requestCancellation = async (tripId: string) => {
+    try {
+      const updated = await updateTripStatus(tripId, 'pending_cancellation');
+      patchTrip(updated);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה בבקשת ביטול');
+    }
+  };
+
+  const handleCancellationResponse = async (tripId: string, approve: boolean) => {
+    try {
+      const updated = await updateTripStatus(
+        tripId,
+        approve ? 'cancelled' : 'cancellation_rejected',
+      );
+      patchTrip(updated);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה בעדכון בקשה');
+    }
+  };
+
+  const acknowledgeRejection = async (tripId: string) => {
+    try {
+      const updated = await updateTripStatus(tripId, 'scheduled');
+      patchTrip(updated);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה בעדכון סטטוס');
     }
   };
 
@@ -130,7 +187,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900" dir="rtl">
       <AnimatePresence mode="wait">
         {view === 'login' && (
-          <LoginScreen onLogin={handleDriverLogin} onManagerLogin={() => setView('manager')} />
+          <LoginScreen onLogin={handleDriverLogin} onManagerLogin={handleManagerLogin} />
         )}
         
         {view === 'driver' && currentDriver && (
@@ -233,7 +290,7 @@ function LoginScreen({ onLogin, onManagerLogin }: { onLogin: (id: string) => voi
               type="text" 
               value={id}
               onChange={(e) => setId(e.target.value)}
-              placeholder="לדוגמה: 101"
+              placeholder="לדוגמה: 1001"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
