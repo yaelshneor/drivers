@@ -1,0 +1,5 @@
+{
+  "name": "Driver Management System",
+  "description": "A prototype for managing drivers, trips, and schedules with driver and manager views.",
+  "requestFramePermissions": []
+}
