@@ -32,11 +32,11 @@ import { Driver, Trip, TripAssignment, BusOption, RouteOption } from './types';
 import {
   fetchDriverById,
   fetchDrivers,
-  fetchLicenseTypes,
   createDriver,
   updateDriverApi,
   deleteDriverApi,
 } from './api/drivers';
+import { LICENSE_TYPES } from './constants/licenseTypes';
 import { fetchBuses } from './api/buses';
 import { fetchRoutes } from './api/routes';
 import { fetchTrips, createTrip, updateTripStatus } from './api/trips';
@@ -346,7 +346,7 @@ function DriverDashboard({
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold">שלום, {driver.name}</h1>
-          <p className="text-slate-500">מזהה: {driver.id} | רישיון: {driver.licenseType}{driver.assignedBus ? ` | אוטובוס: ${driver.assignedBus}` : ''}</p>
+          <p className="text-slate-500">מזהה: {driver.id} | רישיון: {driver.licenseType}</p>
         </div>
         <div className="flex items-center gap-4">
           <button 
@@ -1081,20 +1081,12 @@ function DriverStatsView({ trips }: { trips: Trip[] }) {
 }
 
 function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, onClose: () => void, onSave: (d: Driver) => void }) {
-  const [licenseTypes, setLicenseTypes] = useState<string[]>([]);
   const [formData, setFormData] = useState<Driver>(driver || {
     id: '',
     name: '',
     phone: '',
     licenseType: '',
-    assignedBus: '',
   });
-
-  useEffect(() => {
-    fetchLicenseTypes()
-      .then(setLicenseTypes)
-      .catch(() => alert('שגיאה בטעינת סוגי רישיון'));
-  }, []);
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1146,7 +1138,7 @@ function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, o
               className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">בחר סוג רישיון...</option>
-              {licenseTypes.map((type) => (
+              {LICENSE_TYPES.map((type) => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
@@ -1180,7 +1172,7 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X /></button>
         </div>
         <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
             <div>
               <span className="block text-[10px] font-bold text-slate-400 uppercase">מזהה</span>
               <span className="font-medium">{driver.id}</span>
@@ -1192,10 +1184,6 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
             <div>
               <span className="block text-[10px] font-bold text-slate-400 uppercase">סוג רישיון</span>
               <span className="font-medium">{driver.licenseType}</span>
-            </div>
-            <div>
-              <span className="block text-[10px] font-bold text-slate-400 uppercase">אוטובוס אחרון</span>
-              <span className="font-medium">{driver.assignedBus || '—'}</span>
             </div>
           </div>
 

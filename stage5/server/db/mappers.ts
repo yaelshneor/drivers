@@ -48,16 +48,12 @@ export function mapDriverRow(row: {
   fullname: string;
   phone: string | null;
   licensetype: string;
-  licenseplate: number | null;
-  manufacturer: string | null;
-  model: string | null;
 }) {
   return {
     id: String(row.driverid),
     name: row.fullname,
     phone: row.phone ?? '',
     licenseType: row.licensetype,
-    assignedBus: row.manufacturer ? `${row.manufacturer} ${row.model ?? ''}`.trim() : '',
   };
 }
 

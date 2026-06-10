@@ -3,7 +3,6 @@ export interface Driver {
   name: string;
   phone: string;
   licenseType: string;
-  assignedBus: string;
 }
 
 export interface Trip {
