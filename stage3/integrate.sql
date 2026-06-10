@@ -52,27 +52,21 @@ SELECT
     StartLocation,
     EndLocation,
     EstimatedDuration,
-    0,
-    0,
-    (SELECT MIN(region_id) FROM REGION)
+    NULL,
+    NULL,
+    NULL
 FROM ROUTE_OLD
 UNION ALL
 SELECT
-    r.route_id,
-    r.route_name,
-    r.start_location,
-    r.end_location,
-    r.estimated_duration_minutes,
-    r.total_distance_km,
-    r.created_date,
-    r.region_id
-FROM ROUTE r
-WHERE NOT EXISTS
-(
-    SELECT 1
-    FROM ROUTE_OLD o
-    WHERE o.RouteID = r.route_id
-);
+    route_id,
+    route_name,
+    start_location,
+    end_location,
+    estimated_duration_minutes,
+    total_distance_km,
+    created_date,
+    region_id
+FROM ROUTE;
 
 -- ==========================================
 -- STEP 4 - Create integrated STOP table
@@ -109,23 +103,17 @@ SELECT
     Address,
     Latitude,
     Longitude,
-    (SELECT MIN(site_name) FROM SITE)
+    NULL
 FROM STOP_OLD
 UNION ALL
 SELECT
-    s.stop_id,
-    s.stop_name,
-    s.address,
-    s.latitude,
-    s.longitude,
-    s.site_name
-FROM STOP s
-WHERE NOT EXISTS
-(
-    SELECT 1
-    FROM STOP_OLD o
-    WHERE o.StopID = s.stop_id
-);
+    stop_id,
+    stop_name,
+    address,
+    latitude,
+    longitude,
+    site_name
+FROM STOP;
 
 -- ==========================================
 -- STEP 6 - Create integrated ROUTE_STOP table
@@ -155,27 +143,79 @@ INSERT INTO ROUTE_STOP_NEW
 )
 SELECT
     StopOrder,
-    0,
+    NULL,
     RouteID,
     StopID
 FROM ROUTESTOP_OLD
 UNION ALL
 SELECT
-    rs.stop_order,
-    rs.estimated_arrival_time,
-    rs.route_id,
-    rs.stop_id
-FROM ROUTE_STOP rs
+    stop_order,
+    estimated_arrival_time,
+    route_id,
+    stop_id
+FROM ROUTE_STOP
 WHERE NOT EXISTS
 (
     SELECT 1
     FROM ROUTESTOP_OLD o
-    WHERE o.RouteID = rs.route_id
-      AND o.StopID = rs.stop_id
+    WHERE o.RouteID = ROUTE_STOP.route_id
+      AND o.StopID = ROUTE_STOP.stop_id
 );
 
 -- ==========================================
--- STEP 8 - Update foreign keys
+-- STEP 8 - Create integrated TRIP table
+-- ==========================================
+CREATE TABLE TRIP_NEW
+(
+    trip_id INT PRIMARY KEY,
+    driver_id INT,
+    bus_id INT,
+    departure_time INT,
+    available_seats INT,
+    plate_number INT,
+    route_id INT,
+    trip_date DATE
+);
+
+-- ==========================================
+-- STEP 9 - Merge TRIP data (both sources)
+-- ==========================================
+
+INSERT INTO TRIP_NEW
+(
+    trip_id,
+    driver_id,
+    bus_id,
+    departure_time,
+    available_seats,
+    plate_number,
+    route_id,
+    trip_date
+)
+SELECT
+    TripID,
+    DriverID,
+    BusID,
+    NULL,
+    NULL,
+    NULL,
+    RouteID,
+    TripDate
+FROM TRIP_OLD
+UNION ALL
+SELECT
+    trip_id,
+    NULL,
+    NULL,
+    departure_time,
+    available_seats,
+    plate_number,
+    route_id,
+    trip_date
+FROM TRIP;
+
+-- ==========================================
+-- STEP 10 - Update foreign keys
 -- ==========================================
 
 ALTER TABLE TRIP
@@ -187,21 +227,27 @@ DROP CONSTRAINT route_stop_new_route_id_fkey;
 ALTER TABLE ROUTE_STOP_NEW
 DROP CONSTRAINT route_stop_new_stop_id_fkey;
 
+ALTER TABLE TRIP
+ADD CONSTRAINT trip_route_id_fkey
+FOREIGN KEY (route_id) REFERENCES ROUTE(route_id);
+
 -- ==========================================
--- STEP 9 - Remove old tables
+-- STEP 11 - Remove old tables
 -- ==========================================
 
 DROP TABLE ROUTE_OLD;
 DROP TABLE STOP_OLD;
 DROP TABLE ROUTESTOP_OLD;
+DROP TABLE TRIP_OLD;
 
 -- ==========================================
--- STEP 10 - Rename integrated tables
+-- STEP 12 - Rename integrated tables
 -- ==========================================
 
 ALTER TABLE ROUTE_NEW RENAME TO ROUTE;
 ALTER TABLE STOP_NEW RENAME TO STOP;
 ALTER TABLE ROUTE_STOP_NEW RENAME TO ROUTE_STOP;
+ALTER TABLE TRIP_NEW RENAME TO TRIP;
 
 -- ==========================================
 -- END OF INTEGRATION PROCESS

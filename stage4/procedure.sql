@@ -7,50 +7,41 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     i INT := 0;
-
     v_trip_id INT;
     v_driver_id INT;
     v_route_id INT;
     v_bus_id INT;
     v_plate_number VARCHAR;
-
 BEGIN
-
     WHILE i < p_count LOOP
-
         -- נהג אקראי
         SELECT driverid
         INTO v_driver_id
         FROM driver
         ORDER BY RANDOM()
         LIMIT 1;
-
         -- מסלול אקראי
         SELECT route_id
         INTO v_route_id
         FROM route
         ORDER BY RANDOM()
         LIMIT 1;
-
         -- אוטובוס אקראי
         SELECT busid
         INTO v_bus_id
         FROM bus
         ORDER BY RANDOM()
         LIMIT 1;
-
         -- רכב (plate_number) רק מ-vehicle!
         SELECT plate_number
         INTO v_plate_number
         FROM vehicle
         ORDER BY RANDOM()
         LIMIT 1;
-
         -- יצירת trip_id חדש
         SELECT COALESCE(MAX(trip_id), 0) + 1
         INTO v_trip_id
         FROM trip;
-
         -- הכנסת נסיעה חדשה
         INSERT INTO trip (
             trip_id,
@@ -72,11 +63,8 @@ BEGIN
             v_driver_id,
             v_bus_id
         );
-
         i := i + 1;
-
     END LOOP;
-
 EXCEPTION
     WHEN OTHERS THEN
         RAISE NOTICE 'Error occurred: %', SQLERRM;
@@ -104,47 +92,38 @@ DECLARE
     rec_route RECORD;
     v_trip_count INT;
 BEGIN
-
     OPEN route_cur;
     LOOP
         FETCH route_cur INTO rec_route;
         EXIT WHEN NOT FOUND;
-
         BEGIN
             SELECT COUNT(*)::INT
             INTO v_trip_count
             FROM trip
             WHERE route_id = rec_route.route_id;
-
             IF v_trip_count = 0 THEN
                 UPDATE route
                 SET estimated_duration_minutes = GREATEST(1, estimated_duration_minutes - 1)
                 WHERE route_id = rec_route.route_id;
-
             ELSIF v_trip_count BETWEEN 1 AND 5 THEN
                 UPDATE route
                 SET estimated_duration_minutes = estimated_duration_minutes + 2
                 WHERE route_id = rec_route.route_id;
-
             ELSE
                 UPDATE route
                 SET estimated_duration_minutes = GREATEST(1, estimated_duration_minutes - 2)
                 WHERE route_id = rec_route.route_id;
             END IF;
-
         EXCEPTION
             WHEN OTHERS THEN
                 RAISE NOTICE 'Route % failed: %', rec_route.route_id, SQLERRM;
         END;
-
     END LOOP;
     CLOSE route_cur;
-
     OPEN updated_routes FOR
         SELECT route_id, estimated_duration_minutes
         FROM route
         ORDER BY route_id;
-
 EXCEPTION
     WHEN OTHERS THEN
         BEGIN

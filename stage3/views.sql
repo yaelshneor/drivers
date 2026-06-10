@@ -3,7 +3,7 @@
 -- ========================================================
 
 -- מבט 1: המערכת המקורית שלנו (נהגים, אוטובוסים ונסיעות)
--- מיזוג trip, driver, bus, route + עמודות מחושבות (COUNT, CASE, אחוז תפוסה)
+-- מיזוג trip, driver, bus, route + עמודות מחושבות (COUNT, CASE)
 CREATE OR REPLACE VIEW V_DriverTrips AS
 SELECT
     t.trip_id,
@@ -19,20 +19,13 @@ SELECT
     (SELECT COUNT(*)
      FROM trip t2
      WHERE t2.driver_id = d.driverid) AS driver_total_trips,
-    (SELECT COUNT(*)
-     FROM trip t3
-     WHERE t3.route_id = r.route_id) AS route_total_trips,
     CASE
         WHEN (SELECT COUNT(*) FROM trip t2 WHERE t2.driver_id = d.driverid) >= 10
             THEN 'פעילות גבוהה'
         WHEN (SELECT COUNT(*) FROM trip t2 WHERE t2.driver_id = d.driverid) >= 3
             THEN 'פעילות בינונית'
         ELSE 'פעילות נמוכה'
-    END AS driver_activity,
-    CASE
-        WHEN t.available_seats IS NULL OR b.capacity IS NULL THEN NULL
-        ELSE ROUND((b.capacity - t.available_seats) * 100.0 / NULLIF(b.capacity, 0), 1)
-    END AS occupancy_pct
+    END AS driver_activity
 FROM trip t
 JOIN driver d ON t.driver_id = d.driverid
 JOIN bus b ON t.bus_id = b.busid
@@ -45,21 +38,17 @@ SELECT
     driver_name,
     route_name,
     driver_total_trips,
-    route_total_trips,
-    driver_activity,
-    occupancy_pct
+    driver_activity
 FROM V_DriverTrips
 WHERE driverid = 1001;
 
--- שאילתה 2 על מבט 1: נסיעות ליעד חיפה + פעילות נהג ותפוסה
+-- שאילתה 2 על מבט 1: נסיעות ליעד חיפה + פעילות נהג
 SELECT
     driver_name,
     route_name,
     trip_date,
     end_location,
-    route_total_trips,
-    driver_activity,
-    occupancy_pct
+    driver_activity
 FROM V_DriverTrips
 WHERE end_location = 'חיפה';
 
