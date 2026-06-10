@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { query } from '../db/pool.js';
+import { busesRouter } from './buses.js';
 import { driversRouter } from './drivers.js';
+import { routeCatalogRouter } from './routeCatalog.js';
 import { tripsRouter } from './trips.js';
 
 export const apiRouter = Router();
@@ -16,4 +18,6 @@ apiRouter.get('/health', async (_req, res) => {
 });
 
 apiRouter.use('/drivers', driversRouter);
+apiRouter.use('/buses', busesRouter);
+apiRouter.use('/routes', routeCatalogRouter);
 apiRouter.use('/trips', tripsRouter);

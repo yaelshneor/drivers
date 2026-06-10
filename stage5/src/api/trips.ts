@@ -8,10 +8,10 @@ export function fetchTrips(driverId?: string): Promise<Trip[]> {
 
 export function createTrip(data: {
   driverId: string;
+  busId: string;
+  routeId: string;
   date: string;
   time: string;
-  routeName?: string;
-  destination?: string;
 }): Promise<Trip> {
   return apiPost<Trip>('/api/trips', data);
 }

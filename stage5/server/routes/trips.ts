@@ -26,40 +26,37 @@ tripsRouter.get('/', async (req, res) => {
 });
 
 tripsRouter.post('/', async (req, res) => {
-  const { driverId, date, time, routeName, destination } = req.body ?? {};
+  const { driverId, busId, routeId, date, time } = req.body ?? {};
   const driver_id = Number.parseInt(String(driverId), 10);
-  if (Number.isNaN(driver_id) || !date || !time) {
+  const bus_id = Number.parseInt(String(busId), 10);
+  const route_id = Number.parseInt(String(routeId), 10);
+  if (
+    Number.isNaN(driver_id) ||
+    Number.isNaN(bus_id) ||
+    Number.isNaN(route_id) ||
+    !date ||
+    !time
+  ) {
     return res.status(400).json({ error: 'נתונים חסרים לשיבוץ נסיעה' });
   }
 
   try {
-    const routeResult = await query<{ route_id: number }>(
-      `SELECT route_id FROM route
-       WHERE route_name = $1 OR end_location = $2
-       ORDER BY route_id LIMIT 1`,
-      [routeName ?? destination, destination ?? routeName],
-    );
-    if (routeResult.rowCount === 0) {
-      return res.status(400).json({ error: 'מסלול לא נמצא' });
+    const driverCheck = await query('SELECT 1 FROM driver WHERE driverid = $1', [driver_id]);
+    if (!driverCheck.rowCount) {
+      return res.status(400).json({ error: 'נהג לא נמצא' });
     }
-    const route_id = routeResult.rows[0].route_id;
 
-    const busResult = await query<{ bus_id: number }>(
-      `SELECT bus_id FROM trip WHERE driver_id = $1
-       ORDER BY trip_date DESC NULLS LAST LIMIT 1`,
-      [driver_id],
+    const busResult = await query<{ capacity: number }>(
+      'SELECT capacity FROM bus WHERE busid = $1',
+      [bus_id],
     );
-    let bus_id: number;
-    if (busResult.rowCount) {
-      bus_id = busResult.rows[0].bus_id;
-    } else {
-      const fallback = await query<{ busid: number }>(
-        'SELECT busid FROM bus ORDER BY busid LIMIT 1',
-      );
-      if (!fallback.rowCount) {
-        return res.status(400).json({ error: 'לא נמצא אוטובוס במערכת' });
-      }
-      bus_id = fallback.rows[0].busid;
+    if (!busResult.rowCount) {
+      return res.status(400).json({ error: 'אוטובוס לא נמצא' });
+    }
+
+    const routeCheck = await query('SELECT 1 FROM route WHERE route_id = $1', [route_id]);
+    if (!routeCheck.rowCount) {
+      return res.status(400).json({ error: 'מסלול לא נמצא' });
     }
 
     const plateResult = await query<{ plate_number: string }>(
@@ -72,12 +69,22 @@ tripsRouter.post('/', async (req, res) => {
     );
     const trip_id = idResult.rows[0].next_id;
     const departure_time = parseDepartureTime(time);
+    const available_seats = busResult.rows[0].capacity;
 
     await query(
       `INSERT INTO trip (trip_id, trip_date, departure_time, available_seats,
                          route_id, plate_number, driver_id, bus_id, status)
-       VALUES ($1, $2, $3, 40, $4, $5, $6, $7, 'Active')`,
-      [trip_id, date, departure_time, route_id, plate_number, driver_id, bus_id],
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Active')`,
+      [
+        trip_id,
+        date,
+        departure_time,
+        available_seats,
+        route_id,
+        plate_number,
+        driver_id,
+        bus_id,
+      ],
     );
 
     const trips = await fetchTrips();

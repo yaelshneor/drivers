@@ -19,6 +19,33 @@ export interface Trip {
   status: 'scheduled' | 'pending_cancellation' | 'cancelled' | 'cancellation_rejected';
 }
 
+export interface BusOption {
+  id: string;
+  licensePlate: string;
+  capacity: number;
+  manufacturer: string;
+  model: string;
+  year: number;
+}
+
+export interface RouteOption {
+  id: string;
+  name: string;
+  startLocation: string;
+  endLocation: string;
+  durationMinutes: number;
+  distanceKm: number;
+  stops: string[];
+}
+
+export interface TripAssignment {
+  driverId: string;
+  busId: string;
+  routeId: string;
+  date: string;
+  time: string;
+}
+
 export interface CancellationRequest {
   id: string;
   tripId: string;

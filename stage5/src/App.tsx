@@ -28,7 +28,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Driver, Trip, CancellationRequest } from './types';
+import { Driver, Trip, TripAssignment, BusOption, RouteOption } from './types';
 import {
   fetchDriverById,
   fetchDrivers,
@@ -36,6 +36,8 @@ import {
   updateDriverApi,
   deleteDriverApi,
 } from './api/drivers';
+import { fetchBuses } from './api/buses';
+import { fetchRoutes } from './api/routes';
 import { fetchTrips, createTrip, updateTripStatus } from './api/trips';
 import { ApiError } from './api/client';
 
@@ -137,15 +139,9 @@ export default function App() {
     }
   };
 
-  const assignTrip = async (trip: Trip) => {
+  const assignTrip = async (data: TripAssignment) => {
     try {
-      const created = await createTrip({
-        driverId: trip.driverId,
-        date: trip.date,
-        time: trip.time,
-        routeName: trip.route,
-        destination: trip.destination,
-      });
+      const created = await createTrip(data);
       setTrips((prev) => [...prev, created]);
       setIsAssignmentFormOpen(false);
     } catch (err) {
@@ -1236,25 +1232,36 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
   );
 }
 
-function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], onClose: () => void, onSave: (t: Trip) => void }) {
-  const [formData, setFormData] = useState<Partial<Trip>>({
+function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], onClose: () => void, onSave: (data: TripAssignment) => void }) {
+  const [buses, setBuses] = useState<BusOption[]>([]);
+  const [routes, setRoutes] = useState<RouteOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState<TripAssignment>({
     driverId: '',
+    busId: '',
+    routeId: '',
     date: '',
     time: '',
-    destination: '',
-    departureStation: '',
-    route: '',
-    stops: []
   });
 
-  const [stopInput, setStopInput] = useState('');
+  useEffect(() => {
+    Promise.all([fetchBuses(), fetchRoutes()])
+      .then(([busesData, routesData]) => {
+        setBuses(busesData);
+        setRoutes(routesData);
+      })
+      .catch(() => alert('שגיאה בטעינת אוטובוסים ומסלולים'))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const addStop = () => {
-    if (stopInput) {
-      setFormData({ ...formData, stops: [...(formData.stops || []), stopInput] });
-      setStopInput('');
-    }
-  };
+  const selectedRoute = routes.find((r) => r.id === formData.routeId);
+
+  const canSubmit =
+    formData.driverId &&
+    formData.busId &&
+    formData.routeId &&
+    formData.date &&
+    formData.time;
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1268,94 +1275,112 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X /></button>
         </div>
         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">בחר נהג</label>
-              <select 
-                value={formData.driverId}
-                onChange={(e) => setFormData({...formData, driverId: e.target.value, busId: drivers.find(d => d.id === e.target.value)?.licensePlate})}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">בחר נהג...</option>
-                {drivers.map(d => <option key={d.id} value={d.id}>{d.name} ({d.id})</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">יעד הטיול</label>
-              <input 
-                type="text" 
-                value={formData.destination}
-                onChange={(e) => setFormData({...formData, destination: e.target.value})}
-                placeholder="למשל: ים המלח"
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">תאריך</label>
-              <input 
-                type="date" 
-                value={formData.date}
-                onChange={(e) => setFormData({...formData, date: e.target.value})}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">שעה</label>
-              <input 
-                type="time" 
-                value={formData.time}
-                onChange={(e) => setFormData({...formData, time: e.target.value})}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">תחנת יציאה</label>
-            <input 
-              type="text" 
-              value={formData.departureStation}
-              onChange={(e) => setFormData({...formData, departureStation: e.target.value})}
-              className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">מסלול</label>
-            <input 
-              type="text" 
-              value={formData.route}
-              onChange={(e) => setFormData({...formData, route: e.target.value})}
-              className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">תחנות (הוסף אחת אחת)</label>
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                value={stopInput}
-                onChange={(e) => setStopInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addStop()}
-                className="flex-1 px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <button onClick={addStop} className="bg-slate-100 px-4 py-2 rounded-xl font-bold">+</button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.stops?.map((s, i) => (
-                <span key={i} className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-                  {s}
-                  <button onClick={() => setFormData({...formData, stops: formData.stops?.filter((_, idx) => idx !== i)})}><X size={14}/></button>
-                </span>
-              ))}
-            </div>
-          </div>
+          {loading ? (
+            <p className="text-center text-slate-500 py-8">טוען נתונים...</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">נהג</label>
+                  <select 
+                    value={formData.driverId}
+                    onChange={(e) => setFormData({ ...formData, driverId: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">בחר נהג...</option>
+                    {drivers.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name} ({d.id})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">אוטובוס</label>
+                  <select 
+                    value={formData.busId}
+                    onChange={(e) => setFormData({ ...formData, busId: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">בחר אוטובוס...</option>
+                    {buses.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.manufacturer} {b.model} · {b.licensePlate} ({b.capacity} מקומות)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">מסלול</label>
+                  <select 
+                    value={formData.routeId}
+                    onChange={(e) => setFormData({ ...formData, routeId: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">בחר מסלול...</option>
+                    {routes.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name} ({r.startLocation} → {r.endLocation})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {selectedRoute && (
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-xs font-bold text-slate-400 uppercase">תחנת יציאה</span>
+                      <p className="font-medium">{selectedRoute.startLocation}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-400 uppercase">יעד</span>
+                      <p className="font-medium">{selectedRoute.endLocation}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-400 uppercase">מרחק</span>
+                      <p className="font-medium">{selectedRoute.distanceKm} ק&quot;מ</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-400 uppercase">משך משוער</span>
+                      <p className="font-medium">{selectedRoute.durationMinutes} דקות</p>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-400 uppercase">תחנות במסלול</span>
+                    <StopsSection stops={selectedRoute.stops} />
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">תאריך</label>
+                  <input 
+                    type="date" 
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">שעה</label>
+                  <input 
+                    type="time" 
+                    value={formData.time}
+                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 text-slate-600 font-medium">ביטול</button>
           <button 
-            onClick={() => onSave(formData as Trip)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-100"
+            onClick={() => canSubmit && onSave(formData)}
+            disabled={!canSubmit || loading}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-100"
           >
             בצע שיבוץ
           </button>
