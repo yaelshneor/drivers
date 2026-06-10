@@ -34,7 +34,50 @@ export interface RouteOption {
   endLocation: string;
   durationMinutes: number;
   distanceKm: number;
+  regionId: string;
+  regionName: string;
   stops: string[];
+}
+
+export interface RegionOption {
+  id: string;
+  name: string;
+  terrainType: string;
+}
+
+export interface SiteOption {
+  name: string;
+  siteType: string;
+  address: string;
+}
+
+export interface StopOption {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  siteName: string | null;
+}
+
+export interface RouteStopInput {
+  stopId?: string;
+  stopName?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  siteName?: string | null;
+  arrivalTime: string;
+}
+
+export interface RouteCreateInput {
+  routeName: string;
+  startLocation: string;
+  endLocation: string;
+  durationMinutes: number;
+  distanceKm: number;
+  regionId: string;
+  stops: RouteStopInput[];
 }
 
 export interface TripAssignment {

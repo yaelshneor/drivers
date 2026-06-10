@@ -28,7 +28,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Driver, Trip, TripAssignment, BusOption, RouteOption } from './types';
+import { Driver, Trip, TripAssignment, BusOption, RouteOption, RouteCreateInput, RegionOption, SiteOption, StopOption } from './types';
 import {
   fetchDriverById,
   fetchDrivers,
@@ -38,12 +38,13 @@ import {
 } from './api/drivers';
 import { LICENSE_TYPES } from './constants/licenseTypes';
 import { fetchBuses } from './api/buses';
-import { fetchRoutes } from './api/routes';
+import { fetchRoutes, createRoute } from './api/routes';
+import { fetchRegions, fetchSites, fetchStops } from './api/catalog';
 import { fetchTrips, createTrip, updateTripStatus } from './api/trips';
 import { ApiError } from './api/client';
 
 type View = 'login' | 'driver' | 'manager';
-type ManagerTab = 'drivers' | 'schedule' | 'requests';
+type ManagerTab = 'drivers' | 'routes' | 'schedule' | 'requests';
 type DriverViewMode = 'list' | 'calendar' | 'stats';
 
 export default function App() {
@@ -51,6 +52,7 @@ export default function App() {
   const [currentDriver, setCurrentDriver] = useState<Driver | null>(null);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [routes, setRoutes] = useState<RouteOption[]>([]);
   const [managerTab, setManagerTab] = useState<ManagerTab>('drivers');
   const [driverViewMode, setDriverViewMode] = useState<DriverViewMode>('list');
   const [managerScheduleMode, setManagerScheduleMode] = useState<DriverViewMode>('list');
@@ -59,6 +61,7 @@ export default function App() {
   const [isDriverFormOpen, setIsDriverFormOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [isAssignmentFormOpen, setIsAssignmentFormOpen] = useState(false);
+  const [isRouteFormOpen, setIsRouteFormOpen] = useState(false);
   const [selectedTripDetails, setSelectedTripDetails] = useState<Trip | null>(null);
   const [selectedDriverDetails, setSelectedDriverDetails] = useState<Driver | null>(null);
 
@@ -92,9 +95,14 @@ export default function App() {
 
   const handleManagerLogin = async () => {
     try {
-      const [driversData, tripsData] = await Promise.all([fetchDrivers(), fetchTrips()]);
+      const [driversData, tripsData, routesData] = await Promise.all([
+        fetchDrivers(),
+        fetchTrips(),
+        fetchRoutes(),
+      ]);
       setDrivers(driversData);
       setTrips(tripsData);
+      setRoutes(routesData);
       setView('manager');
     } catch {
       alert('שגיאה בחיבור לשרת — ודאי שה-API וה-DB פעילים');
@@ -106,6 +114,7 @@ export default function App() {
     setCurrentDriver(null);
     setTrips([]);
     setDrivers([]);
+    setRoutes([]);
   };
 
   const addDriver = async (driver: Driver) => {
@@ -147,6 +156,16 @@ export default function App() {
       setIsAssignmentFormOpen(false);
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'שגיאה בשיבוץ נסיעה');
+    }
+  };
+
+  const addRoute = async (data: RouteCreateInput) => {
+    try {
+      const created = await createRoute(data);
+      setRoutes((prev) => [created, ...prev]);
+      setIsRouteFormOpen(false);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה ביצירת מסלול');
     }
   };
 
@@ -204,12 +223,14 @@ export default function App() {
           <ManagerDashboard 
             drivers={drivers}
             trips={trips}
+            routes={routes}
             activeTab={managerTab}
             setActiveTab={setManagerTab}
             onLogout={handleLogout}
             onAddDriver={() => { setEditingDriver(null); setIsDriverFormOpen(true); }}
             onEditDriver={(d) => { setEditingDriver(d); setIsDriverFormOpen(true); }}
             onDeleteDriver={deleteDriver}
+            onAddRoute={() => setIsRouteFormOpen(true)}
             onAssignTrip={() => setIsAssignmentFormOpen(true)}
             onCancellationResponse={handleCancellationResponse}
             scheduleMode={managerScheduleMode}
@@ -231,9 +252,16 @@ export default function App() {
 
       {isAssignmentFormOpen && (
         <AssignmentFormModal 
-          drivers={drivers} 
+          drivers={drivers}
           onClose={() => setIsAssignmentFormOpen(false)} 
           onSave={assignTrip} 
+        />
+      )}
+
+      {isRouteFormOpen && (
+        <RouteFormModal
+          onClose={() => setIsRouteFormOpen(false)}
+          onSave={addRoute}
         />
       )}
 
@@ -601,13 +629,15 @@ function TripDetailsModal({
 
 function ManagerDashboard({ 
   drivers, 
-  trips, 
+  trips,
+  routes,
   activeTab, 
   setActiveTab, 
   onLogout,
   onAddDriver,
   onEditDriver,
   onDeleteDriver,
+  onAddRoute,
   onAssignTrip,
   onCancellationResponse,
   scheduleMode,
@@ -616,13 +646,15 @@ function ManagerDashboard({
   onSelectDriver
 }: { 
   drivers: Driver[], 
-  trips: Trip[], 
+  trips: Trip[],
+  routes: RouteOption[],
   activeTab: ManagerTab,
   setActiveTab: (tab: ManagerTab) => void,
   onLogout: () => void,
   onAddDriver: () => void,
   onEditDriver: (d: Driver) => void,
   onDeleteDriver: (id: string) => void,
+  onAddRoute: () => void,
   onAssignTrip: () => void,
   onCancellationResponse: (id: string, approve: boolean) => void,
   scheduleMode: DriverViewMode,
@@ -646,6 +678,7 @@ function ManagerDashboard({
           </div>
           <div className="hidden md:flex gap-1">
             <TabButton active={activeTab === 'drivers'} onClick={() => setActiveTab('drivers')} icon={<Users size={18} />} label="נהגים" />
+            <TabButton active={activeTab === 'routes'} onClick={() => setActiveTab('routes')} icon={<MapPin size={18} />} label="מסלולים" />
             <TabButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar size={18} />} label="לוח נסיעות" />
             <TabButton 
               active={activeTab === 'requests'} 
@@ -665,6 +698,7 @@ function ManagerDashboard({
       {/* Mobile Tabs */}
       <div className="md:hidden flex border-b border-slate-200 bg-white">
         <TabButton active={activeTab === 'drivers'} onClick={() => setActiveTab('drivers')} icon={<Users size={18} />} label="נהגים" className="flex-1" />
+        <TabButton active={activeTab === 'routes'} onClick={() => setActiveTab('routes')} icon={<MapPin size={18} />} label="מסלולים" className="flex-1" />
         <TabButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar size={18} />} label="לוז" className="flex-1" />
         <TabButton active={activeTab === 'requests'} onClick={() => setActiveTab('requests')} icon={<AlertCircle size={18} />} label="בקשות" className="flex-1" badge={pendingRequests.length > 0 ? pendingRequests.length : undefined} />
       </div>
@@ -725,6 +759,51 @@ function ManagerDashboard({
                         </td>
                       </tr>
                     )})}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {activeTab === 'routes' && (
+            <section>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">ניהול מסלולים</h2>
+                <button
+                  onClick={onAddRoute}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-md"
+                >
+                  <Plus size={20} />
+                  מסלול חדש
+                </button>
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-right">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold text-slate-600">שם מסלול</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">יציאה → יעד</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">אזור</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">משך</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">מרחק</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">תחנות</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {routes.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500">אין מסלולים — צרי מסלול חדש</td>
+                      </tr>
+                    ) : routes.map((route) => (
+                      <tr key={route.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-medium">{route.name}</td>
+                        <td className="px-6 py-4 text-slate-500">{route.startLocation} → {route.endLocation}</td>
+                        <td className="px-6 py-4 text-slate-500">{route.regionName}</td>
+                        <td className="px-6 py-4 text-slate-500">{route.durationMinutes} דק&apos;</td>
+                        <td className="px-6 py-4 text-slate-500">{route.distanceKm} ק&quot;מ</td>
+                        <td className="px-6 py-4 text-slate-500">{route.stops.length}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -1218,6 +1297,202 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
           <button onClick={onClose} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-100">
             סגור
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+type StopFormRow = {
+  mode: 'existing' | 'new';
+  stopId: string;
+  stopName: string;
+  address: string;
+  latitude: string;
+  longitude: string;
+  siteName: string;
+  arrivalTime: string;
+};
+
+function RouteFormModal({ onClose, onSave }: { onClose: () => void, onSave: (data: RouteCreateInput) => void }) {
+  const [regions, setRegions] = useState<RegionOption[]>([]);
+  const [sites, setSites] = useState<SiteOption[]>([]);
+  const [stops, setStops] = useState<StopOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({
+    routeName: '',
+    startLocation: '',
+    endLocation: '',
+    durationMinutes: '',
+    distanceKm: '',
+    regionId: '',
+  });
+  const [stopRows, setStopRows] = useState<StopFormRow[]>([{
+    mode: 'existing',
+    stopId: '',
+    stopName: '',
+    address: '',
+    latitude: '',
+    longitude: '',
+    siteName: '',
+    arrivalTime: '',
+  }]);
+
+  useEffect(() => {
+    Promise.all([fetchRegions(), fetchSites(), fetchStops()])
+      .then(([r, s, st]) => { setRegions(r); setSites(s); setStops(st); })
+      .catch(() => alert('שגיאה בטעינת נתונים'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const addStopRow = () => {
+    setStopRows((prev) => [...prev, {
+      mode: 'existing', stopId: '', stopName: '', address: '', latitude: '', longitude: '', siteName: '', arrivalTime: '',
+    }]);
+  };
+
+  const buildPayload = (): RouteCreateInput | null => {
+    if (!form.routeName || !form.startLocation || !form.endLocation || !form.regionId || !form.durationMinutes || !form.distanceKm) return null;
+    const parsedStops = stopRows.map((row, i) => {
+      if (!row.arrivalTime) return null;
+      if (row.mode === 'existing') {
+        if (!row.stopId) return null;
+        return { stopId: row.stopId, arrivalTime: row.arrivalTime };
+      }
+      if (!row.stopName || !row.address || !row.latitude || !row.longitude) return null;
+      return {
+        stopName: row.stopName,
+        address: row.address,
+        latitude: Number.parseFloat(row.latitude),
+        longitude: Number.parseFloat(row.longitude),
+        siteName: row.siteName || null,
+        arrivalTime: row.arrivalTime,
+      };
+    });
+    if (parsedStops.some((s) => s === null)) return null;
+    return {
+      routeName: form.routeName,
+      startLocation: form.startLocation,
+      endLocation: form.endLocation,
+      durationMinutes: Number.parseInt(form.durationMinutes, 10),
+      distanceKm: Number.parseInt(form.distanceKm, 10),
+      regionId: form.regionId,
+      stops: parsedStops as RouteCreateInput['stops'],
+    };
+  };
+
+  const payload = buildPayload();
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <h3 className="text-xl font-bold">יצירת מסלול חדש</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X /></button>
+        </div>
+        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          {loading ? (
+            <p className="text-center text-slate-500 py-8">טוען...</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">שם מסלול</label>
+                  <input value={form.routeName} onChange={(e) => setForm({ ...form, routeName: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">תחנת יציאה</label>
+                  <input value={form.startLocation} onChange={(e) => setForm({ ...form, startLocation: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">יעד</label>
+                  <input value={form.endLocation} onChange={(e) => setForm({ ...form, endLocation: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">אזור (region)</label>
+                  <select value={form.regionId} onChange={(e) => setForm({ ...form, regionId: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">בחר אזור...</option>
+                    {regions.map((r) => (
+                      <option key={r.id} value={r.id}>{r.name} ({r.terrainType})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">משך (דקות)</label>
+                  <input type="number" value={form.durationMinutes} onChange={(e) => setForm({ ...form, durationMinutes: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">מרחק (ק&quot;מ)</label>
+                  <input type="number" value={form.distanceKm} onChange={(e) => setForm({ ...form, distanceKm: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold">תחנות במסלול</h4>
+                  <button type="button" onClick={addStopRow} className="text-sm text-indigo-600 font-semibold">+ הוסף תחנה</button>
+                </div>
+                <div className="space-y-3">
+                  {stopRows.map((row, idx) => (
+                    <div key={idx} className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50">
+                      <div className="flex gap-3 items-center">
+                        <select
+                          value={row.mode}
+                          onChange={(e) => {
+                            const mode = e.target.value as 'existing' | 'new';
+                            setStopRows((prev) => prev.map((r, i) => i === idx ? { ...r, mode } : r));
+                          }}
+                          className="px-3 py-2 rounded-lg border border-slate-200 text-sm"
+                        >
+                          <option value="existing">תחנה קיימת</option>
+                          <option value="new">תחנה חדשה</option>
+                        </select>
+                        <input type="time" value={row.arrivalTime} onChange={(e) => setStopRows((prev) => prev.map((r, i) => i === idx ? { ...r, arrivalTime: e.target.value } : r))} className="px-3 py-2 rounded-lg border border-slate-200 text-sm" />
+                        {stopRows.length > 1 && (
+                          <button type="button" onClick={() => setStopRows((prev) => prev.filter((_, i) => i !== idx))} className="text-red-500 text-sm mr-auto">הסר</button>
+                        )}
+                      </div>
+                      {row.mode === 'existing' ? (
+                        <select value={row.stopId} onChange={(e) => setStopRows((prev) => prev.map((r, i) => i === idx ? { ...r, stopId: e.target.value } : r))} className="w-full px-4 py-2 rounded-xl border border-slate-200">
+                          <option value="">בחר תחנה...</option>
+                          {stops.map((s) => (
+                            <option key={s.id} value={s.id}>{s.name} — {s.address}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <input placeholder="שם תחנה" value={row.stopName} onChange={(e) => setStopRows((prev) => prev.map((r, i) => i === idx ? { ...r, stopName: e.target.value } : r))} className="px-4 py-2 rounded-xl border border-slate-200" />
+                          <input placeholder="כתובת" value={row.address} onChange={(e) => setStopRows((prev) => prev.map((r, i) => i === idx ? { ...r, address: e.target.value } : r))} className="px-4 py-2 rounded-xl border border-slate-200" />
+                          <input placeholder="Latitude" value={row.latitude} onChange={(e) => setStopRows((prev) => prev.map((r, i) => i === idx ? { ...r, latitude: e.target.value } : r))} className="px-4 py-2 rounded-xl border border-slate-200" />
+                          <input placeholder="Longitude" value={row.longitude} onChange={(e) => setStopRows((prev) => prev.map((r, i) => i === idx ? { ...r, longitude: e.target.value } : r))} className="px-4 py-2 rounded-xl border border-slate-200" />
+                          <select value={row.siteName} onChange={(e) => setStopRows((prev) => prev.map((r, i) => i === idx ? { ...r, siteName: e.target.value } : r))} className="md:col-span-2 px-4 py-2 rounded-xl border border-slate-200">
+                            <option value="">אתר (אופציונלי)</option>
+                            {sites.map((s) => (
+                              <option key={s.name} value={s.name}>{s.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-slate-600 font-medium">ביטול</button>
+          <button
+            onClick={() => payload && onSave(payload)}
+            disabled={!payload || loading}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-2 rounded-xl font-bold"
+          >
+            שמור מסלול
           </button>
         </div>
       </motion.div>
