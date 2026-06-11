@@ -230,10 +230,12 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900" dir="rtl">
       <AnimatePresence mode="wait">
+        {/* מסך כניסה */}
         {view === 'login' && (
           <LoginScreen onLogin={handleDriverLogin} onManagerLogin={handleManagerLogin} />
         )}
-        
+
+        {/* מסך נהג */}
         {view === 'driver' && currentDriver && (
           <DriverDashboard 
             driver={currentDriver} 
@@ -247,6 +249,7 @@ export default function App() {
           />
         )}
 
+        {/* מסך מנהל */}
         {view === 'manager' && (
           <ManagerDashboard 
             drivers={drivers}
@@ -274,7 +277,8 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Modals */}
+      {/* מודלים */}
+      {/* מודל הוספה/עריכת נהג */}
       {isDriverFormOpen && (
         <DriverFormModal 
           driver={editingDriver} 
@@ -283,6 +287,7 @@ export default function App() {
         />
       )}
 
+      {/* מודל שיבוץ נסיעה */}
       {isAssignmentFormOpen && (
         <AssignmentFormModal 
           drivers={drivers}
@@ -291,6 +296,7 @@ export default function App() {
         />
       )}
 
+      {/* מודל יצירת מסלול */}
       {isRouteFormOpen && (
         <RouteFormModal
           onClose={() => setIsRouteFormOpen(false)}
@@ -298,6 +304,7 @@ export default function App() {
         />
       )}
 
+      {/* מודל הוספת כלי תחבורה */}
       {isVehicleFormOpen && (
         <VehicleFormModal
           onClose={() => setIsVehicleFormOpen(false)}
@@ -305,6 +312,7 @@ export default function App() {
         />
       )}
 
+      {/* מודל פרטי נסיעה */}
       {selectedTripDetails && (
         <TripDetailsModal 
           trip={selectedTripDetails} 
@@ -316,6 +324,7 @@ export default function App() {
         />
       )}
 
+      {/* מודל פרטי נהג */}
       {selectedDriverDetails && (
         <DriverDetailsModal 
           driver={selectedDriverDetails} 
@@ -327,8 +336,14 @@ export default function App() {
   );
 }
 
-// --- Screens ---
+// =============================================================================
+// מסכים
+// =============================================================================
 
+// -----------------------------------------------------------------------------
+// מסך כניסה — LoginScreen
+// הזנת מזהה נהג או כניסת מנהל
+// -----------------------------------------------------------------------------
 function LoginScreen({ onLogin, onManagerLogin }: { onLogin: (id: string) => void, onManagerLogin: () => void }) {
   const [id, setId] = useState('');
 
@@ -384,6 +399,10 @@ function LoginScreen({ onLogin, onManagerLogin }: { onLogin: (id: string) => voi
   );
 }
 
+// -----------------------------------------------------------------------------
+// מסך נהג — DriverDashboard
+// רשימת נסיעות, לוח שנה, סיכום סטטיסטי, בקשות ביטול
+// -----------------------------------------------------------------------------
 function DriverDashboard({ 
   driver, 
   trips, 
@@ -522,6 +541,9 @@ function DriverDashboard({
   );
 }
 
+// -----------------------------------------------------------------------------
+// תת-מסך: לוח שנה — CalendarView
+// -----------------------------------------------------------------------------
 function CalendarView({ 
   trips, 
   onSelectTrip, 
@@ -603,6 +625,13 @@ function CalendarView({
   );
 }
 
+// =============================================================================
+// מודלים
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// מודל פרטי נסיעה — TripDetailsModal
+// -----------------------------------------------------------------------------
 function TripDetailsModal({ 
   trip, 
   onClose, 
@@ -667,6 +696,10 @@ function TripDetailsModal({
   );
 }
 
+// -----------------------------------------------------------------------------
+// מסך מנהל — ManagerDashboard
+// טאבים: נהגים | כלים | מסלולים | לוח נסיעות | בקשות ביטול
+// -----------------------------------------------------------------------------
 function ManagerDashboard({ 
   drivers, 
   trips,
@@ -764,6 +797,7 @@ function ManagerDashboard({
               <button onClick={onDismissAssignNotice} className="text-emerald-600 hover:text-emerald-800 shrink-0"><X size={18} /></button>
             </div>
           )}
+          {/* טאב: נהגים */}
           {activeTab === 'drivers' && (
             <section>
               <div className="flex justify-between items-center mb-6">
@@ -826,6 +860,7 @@ function ManagerDashboard({
             </section>
           )}
 
+          {/* טאב: כלי תחבורה */}
           {activeTab === 'vehicles' && (
             <section>
               <div className="flex justify-between items-center mb-6">
@@ -869,6 +904,7 @@ function ManagerDashboard({
             </section>
           )}
 
+          {/* טאב: מסלולים */}
           {activeTab === 'routes' && (
             <section>
               <div className="flex justify-between items-center mb-6">
@@ -933,6 +969,7 @@ function ManagerDashboard({
             </section>
           )}
 
+          {/* טאב: לוח נסיעות */}
           {activeTab === 'schedule' && (
             <section>
               <div className="flex justify-between items-center mb-6">
@@ -987,6 +1024,7 @@ function ManagerDashboard({
             </section>
           )}
 
+          {/* טאב: בקשות ביטול */}
           {activeTab === 'requests' && (
             <section>
               <h2 className="text-2xl font-bold mb-6">בקשות ביטול נסיעה</h2>
@@ -1045,6 +1083,9 @@ function ManagerDashboard({
   );
 }
 
+// -----------------------------------------------------------------------------
+// מודל תחנות במסלול — RouteStopsModal
+// -----------------------------------------------------------------------------
 function RouteStopsModal({ route, onClose }: { route: RouteOption, onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1101,7 +1142,9 @@ function RouteStopsModal({ route, onClose }: { route: RouteOption, onClose: () =
   );
 }
 
-// --- Components ---
+// =============================================================================
+// רכיבי עזר
+// =============================================================================
 
 function TabButton({ active, onClick, icon, label, badge, className = "" }: { 
   active: boolean, 
@@ -1265,6 +1308,9 @@ function TripCard({ trip, isDriverView, onRequestCancellation, driverName, onSel
   );
 }
 
+// -----------------------------------------------------------------------------
+// תת-מסך: סיכום נסיעות לנהג — DriverStatsView
+// -----------------------------------------------------------------------------
 function DriverStatsView({ trips }: { trips: Trip[] }) {
   const statsByMonth = trips.reduce((acc, trip) => {
     const month = trip.date.substring(0, 7); // YYYY-MM
@@ -1352,6 +1398,9 @@ function DriverStatsView({ trips }: { trips: Trip[] }) {
   );
 }
 
+// -----------------------------------------------------------------------------
+// מודל הוספה/עריכת נהג — DriverFormModal
+// -----------------------------------------------------------------------------
 function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, onClose: () => void, onSave: (d: Driver) => void }) {
   const [formData, setFormData] = useState<Driver>(driver || {
     id: '',
@@ -1433,6 +1482,9 @@ function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, o
 
 const VEHICLE_TYPES = ['אוטובוס עירוני', 'אוטובוס תיירותי', 'מיניבוס', 'אוטובוס בינעירוני'];
 
+// -----------------------------------------------------------------------------
+// מודל הוספת כלי תחבורה — VehicleFormModal
+// -----------------------------------------------------------------------------
 function VehicleFormModal({ onClose, onSave }: { onClose: () => void, onSave: (data: VehicleCreateInput) => void }) {
   const [form, setForm] = useState<VehicleCreateInput>({
     licensePlate: '',
@@ -1543,6 +1595,9 @@ function VehicleFormModal({ onClose, onSave }: { onClose: () => void, onSave: (d
   );
 }
 
+// -----------------------------------------------------------------------------
+// מודל פרטי נהג — DriverDetailsModal (שלב ד': ניתוח אזור)
+// -----------------------------------------------------------------------------
 function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips: Trip[], onClose: () => void }) {
   const [activity, setActivity] = useState<DriverRegionActivity | null>(null);
   const [activityError, setActivityError] = useState('');
@@ -1662,6 +1717,9 @@ type StopFormRow = {
   arrivalTime: string;
 };
 
+// -----------------------------------------------------------------------------
+// מודל יצירת מסלול — RouteFormModal
+// -----------------------------------------------------------------------------
 function RouteFormModal({ onClose, onSave }: { onClose: () => void, onSave: (data: RouteCreateInput) => void }) {
   const [regions, setRegions] = useState<RegionOption[]>([]);
   const [sites, setSites] = useState<SiteOption[]>([]);
@@ -1847,6 +1905,9 @@ function RouteFormModal({ onClose, onSave }: { onClose: () => void, onSave: (dat
   );
 }
 
+// -----------------------------------------------------------------------------
+// מודל שיבוץ נסיעה — AssignmentFormModal (שלב ד': טריגר)
+// -----------------------------------------------------------------------------
 function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], onClose: () => void, onSave: (data: TripAssignment) => void }) {
   const [buses, setBuses] = useState<BusOption[]>([]);
   const [routes, setRoutes] = useState<RouteOption[]>([]);

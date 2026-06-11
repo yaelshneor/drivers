@@ -12,6 +12,6 @@ export const config = {
     port: Number(process.env.DB_PORT ?? 5432),
     user: process.env.DB_USER_SECRET ?? 'yael',
     password: process.env.DB_PASSWORD_SECRET ?? '',
-    database: process.env.DB_NAME_SECRET ?? 'stage3',
+    database: process.env.DB_NAME_SECRET ?? 'try',
   },
 };
