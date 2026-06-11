@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db/pool.js';
-import { LICENSE_TYPES, isValidLicenseType } from '../constants/licenseTypes.js';
+import { isValidLicenseType } from '../constants/licenseTypes.js';
 import { mapDriverRow } from '../db/mappers.js';
 import { DRIVER_TRIP_SUMMARY_SQL, UPDATE_DRIVER_SQL } from '../queries/stage2Queries.js';
 
@@ -42,10 +42,6 @@ function mapDriverWithTripsRow(row: DriverWithTripsRow) {
 
 export const driversRouter = Router();
 
-driversRouter.get('/license-types', (_req, res) => {
-  return res.json([...LICENSE_TYPES]);
-});
-
 const TOP_REGION_NAME_SQL = `
   SELECT reg.regio_name
   FROM trip t
@@ -66,8 +62,7 @@ driversRouter.get('/:id/region-activity', async (req, res) => {
   try {
     const result = await query<{
       driver_name: string;
-      top_region?: number | null;
-      top_region_name?: string | null;
+      top_region_name: string | null;
       trip_count: number;
       route_count: number;
       status: string;
@@ -79,22 +74,12 @@ driversRouter.get('/:id/region-activity', async (req, res) => {
 
     const row = result.rows[0];
     let topRegionName = row.top_region_name?.trim() || null;
-
     if (!topRegionName) {
       const nameResult = await query<{ regio_name: string }>(TOP_REGION_NAME_SQL, [id]);
       topRegionName = nameResult.rows[0]?.regio_name?.trim() || null;
     }
 
-    if (!topRegionName && row.top_region != null) {
-      const byId = await query<{ regio_name: string }>(
-        'SELECT regio_name FROM region WHERE region_id = $1',
-        [row.top_region],
-      );
-      topRegionName = byId.rows[0]?.regio_name?.trim() || null;
-    }
-
     return res.json({
-      driverName: row.driver_name,
       topRegionName,
       tripCount: row.trip_count,
       routeCount: row.route_count,

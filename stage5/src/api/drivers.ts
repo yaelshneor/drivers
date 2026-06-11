@@ -13,17 +13,12 @@ export function fetchDriverRegionActivity(id: string): Promise<DriverRegionActiv
   return apiGet<DriverRegionActivity>(`/api/drivers/${encodeURIComponent(id)}/region-activity`);
 }
 
-export function fetchLicenseTypes(): Promise<string[]> {
-  return apiGet<string[]>('/api/drivers/license-types');
-}
-
 export function createDriver(driver: Driver): Promise<Driver> {
   return apiPost<Driver>('/api/drivers', {
     id: driver.id,
     name: driver.name,
     phone: driver.phone,
     licensetype: driver.licensetype,
-    licenseType: driver.licensetype,
   });
 }
 
@@ -32,7 +27,6 @@ export function updateDriverApi(driver: Driver): Promise<Driver> {
     name: driver.name,
     phone: driver.phone,
     licensetype: driver.licensetype,
-    licenseType: driver.licensetype,
   });
 }
 

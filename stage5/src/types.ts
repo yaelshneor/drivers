@@ -7,7 +7,6 @@ export interface Driver {
 }
 
 export interface DriverRegionActivity {
-  driverName: string;
   topRegionName: string | null;
   tripCount: number;
   routeCount: number;
@@ -107,10 +106,3 @@ export interface TripAssignment {
   time: string;
 }
 
-export interface CancellationRequest {
-  id: string;
-  tripId: string;
-  driverId: string;
-  reason: string;
-  status: 'pending' | 'approved' | 'rejected';
-}

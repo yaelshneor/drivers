@@ -82,9 +82,9 @@ tripsRouter.post('/', async (req, res) => {
     const trips = await fetchTrips();
     const created = trips.find((t) => t.id === String(trip_id));
     if (!created) {
-      return res.status(201).json({ id: String(trip_id), triggerValidated: true });
+      return res.status(201).json({ id: String(trip_id) });
     }
-    return res.status(201).json({ ...created, triggerValidated: true });
+    return res.status(201).json(created);
   } catch (err) {
     console.error('POST /api/trips', err);
     const pgMsg = err instanceof Error ? err.message : '';

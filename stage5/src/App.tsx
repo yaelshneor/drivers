@@ -19,12 +19,10 @@ import {
   AlertCircle,
   MapPin,
   Clock,
-  Phone,
   CreditCard,
   ChevronRight,
   ChevronLeft,
   BarChart2,
-  PieChart,
   TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
