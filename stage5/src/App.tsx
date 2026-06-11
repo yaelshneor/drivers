@@ -285,7 +285,8 @@ export default function App() {
           onClose={() => setIsDriverFormOpen(false)} 
           onSave={editingDriver ? updateDriver : addDriver} 
         />
-      )}
+      )} 
+      
 
       {/* מודל שיבוץ נסיעה */}
       {isAssignmentFormOpen && (
