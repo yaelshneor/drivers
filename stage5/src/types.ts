@@ -6,6 +6,14 @@ export interface Driver {
   totalTrips?: number;
 }
 
+export interface DriverRegionActivity {
+  driverName: string;
+  topRegion: number | null;
+  tripCount: number;
+  routeCount: number;
+  status: string;
+}
+
 export interface Trip {
   id: string;
   driverId: string;

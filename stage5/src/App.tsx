@@ -28,17 +28,18 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Driver, Trip, TripAssignment, BusOption, RouteOption, RouteCreateInput, VehicleCreateInput, RegionOption, SiteOption, StopOption } from './types';
+import { Driver, Trip, TripAssignment, BusOption, RouteOption, RouteCreateInput, VehicleCreateInput, RegionOption, SiteOption, StopOption, DriverRegionActivity } from './types';
 import {
   fetchDriverById,
   fetchDrivers,
   createDriver,
   updateDriverApi,
   deleteDriverApi,
+  fetchDriverRegionActivity,
 } from './api/drivers';
 import { LICENSE_TYPES } from './constants/licenseTypes';
 import { fetchBuses, createVehicle } from './api/buses';
-import { fetchRoutes, createRoute } from './api/routes';
+import { fetchRoutes, createRoute, updateRouteStatistics } from './api/routes';
 import { fetchRegions, fetchSites, fetchStops } from './api/catalog';
 import { fetchTrips, createTrip, updateTripStatus } from './api/trips';
 import { ApiError } from './api/client';
@@ -174,6 +175,15 @@ export default function App() {
     }
   };
 
+  const refreshRouteStatistics = async () => {
+    try {
+      const updated = await updateRouteStatistics();
+      setRoutes(updated);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה בעדכון סטטיסטיקות מסלולים');
+    }
+  };
+
   const addVehicle = async (data: VehicleCreateInput) => {
     try {
       const created = await createVehicle(data);
@@ -248,6 +258,7 @@ export default function App() {
             onDeleteDriver={deleteDriver}
             onAddVehicle={() => setIsVehicleFormOpen(true)}
             onAddRoute={() => setIsRouteFormOpen(true)}
+            onUpdateRouteStatistics={refreshRouteStatistics}
             onAssignTrip={() => setIsAssignmentFormOpen(true)}
             onCancellationResponse={handleCancellationResponse}
             scheduleMode={managerScheduleMode}
@@ -664,6 +675,7 @@ function ManagerDashboard({
   onDeleteDriver,
   onAddVehicle,
   onAddRoute,
+  onUpdateRouteStatistics,
   onAssignTrip,
   onCancellationResponse,
   scheduleMode,
@@ -683,6 +695,7 @@ function ManagerDashboard({
   onDeleteDriver: (id: string) => void,
   onAddVehicle: () => void,
   onAddRoute: () => void,
+  onUpdateRouteStatistics: () => void,
   onAssignTrip: () => void,
   onCancellationResponse: (id: string, approve: boolean) => void,
   scheduleMode: DriverViewMode,
@@ -845,13 +858,22 @@ function ManagerDashboard({
             <section>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">ניהול מסלולים</h2>
-                <button
-                  onClick={onAddRoute}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-md"
-                >
-                  <Plus size={20} />
-                  מסלול חדש
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={onUpdateRouteStatistics}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-md"
+                  >
+                    <BarChart2 size={20} />
+                    עדכון סטטיסטיקות
+                  </button>
+                  <button
+                    onClick={onAddRoute}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-md"
+                  >
+                    <Plus size={20} />
+                    מסלול חדש
+                  </button>
+                </div>
               </div>
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                 <table className="w-full text-right">
@@ -1501,6 +1523,17 @@ function VehicleFormModal({ onClose, onSave }: { onClose: () => void, onSave: (d
 }
 
 function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips: Trip[], onClose: () => void }) {
+  const [activity, setActivity] = useState<DriverRegionActivity | null>(null);
+  const [activityError, setActivityError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchDriverRegionActivity(driver.id)
+      .then((data) => { if (!cancelled) setActivity(data); })
+      .catch(() => { if (!cancelled) setActivityError('לא ניתן לטעון ניתוח אזור'); });
+    return () => { cancelled = true; };
+  }, [driver.id]);
+
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div 
@@ -1526,6 +1559,37 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
               <span className="block text-[10px] font-bold text-slate-400 uppercase">סוג רישיון</span>
               <span className="font-medium">{driver.licensetype}</span>
             </div>
+          </div>
+
+          <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+            <h4 className="font-bold mb-3 flex items-center gap-2 text-indigo-900">
+              <TrendingUp size={18} />
+              ניתוח אזור פעילות (get_driver_top_region_activity)
+            </h4>
+            {activityError ? (
+              <p className="text-sm text-red-600">{activityError}</p>
+            ) : !activity ? (
+              <p className="text-sm text-slate-500">טוען...</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div>
+                  <span className="block text-[10px] font-bold text-indigo-400 uppercase">אזור מוביל</span>
+                  <span className="font-medium">{activity.topRegion ?? '—'}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-bold text-indigo-400 uppercase">נסיעות באזור</span>
+                  <span className="font-medium">{activity.tripCount}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-bold text-indigo-400 uppercase">מסלולים</span>
+                  <span className="font-medium">{activity.routeCount}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] font-bold text-indigo-400 uppercase">סטטוס</span>
+                  <span className="font-medium">{activity.status}</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>

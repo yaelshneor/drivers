@@ -46,6 +46,43 @@ driversRouter.get('/license-types', (_req, res) => {
   return res.json([...LICENSE_TYPES]);
 });
 
+driversRouter.get('/:id/region-activity', async (req, res) => {
+  const id = Number.parseInt(req.params.id, 10);
+  if (Number.isNaN(id)) {
+    return res.status(400).json({ error: 'מזהה נהג לא תקין' });
+  }
+
+  try {
+    const result = await query<{
+      driver_name: string;
+      top_region: number | null;
+      trip_count: number;
+      route_count: number;
+      status: string;
+    }>('SELECT * FROM get_driver_top_region_activity($1)', [id]);
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: 'מזהה נהג לא נמצא' });
+    }
+
+    const row = result.rows[0];
+    return res.json({
+      driverName: row.driver_name,
+      topRegion: row.top_region,
+      tripCount: row.trip_count,
+      routeCount: row.route_count,
+      status: row.status,
+    });
+  } catch (err) {
+    console.error('GET /api/drivers/:id/region-activity', err);
+    const message = err instanceof Error && err.message.includes('Driver not found')
+      ? 'מזהה נהג לא נמצא'
+      : 'שגיאת שרת';
+    const status = message === 'מזהה נהג לא נמצא' ? 404 : 500;
+    return res.status(status).json({ error: message });
+  }
+});
+
 driversRouter.get('/', async (_req, res) => {
   try {
     const result = await query<DriverWithTripsRow>(DRIVER_TRIP_SUMMARY_SQL);

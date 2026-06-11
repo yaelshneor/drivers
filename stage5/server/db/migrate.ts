@@ -1,4 +1,5 @@
 import { query } from './pool.js';
+import { installStage4Objects } from './stage4Install.js';
 
 export async function runMigrations() {
   await query(
@@ -7,4 +8,5 @@ export async function runMigrations() {
   await query(
     `ALTER TABLE driver ALTER COLUMN licensetype TYPE VARCHAR(50)`,
   );
+  await installStage4Objects();
 }

@@ -43,6 +43,17 @@ function mapRouteRow(row: RouteRow) {
 
 export const routesRouter = Router();
 
+routesRouter.post('/update-statistics', async (_req, res) => {
+  try {
+    await query('CALL update_route_statistics()');
+    const result = await query<RouteRow>(`${ROUTE_SELECT} ORDER BY r.route_id`);
+    return res.json(result.rows.map(mapRouteRow));
+  } catch (err) {
+    console.error('POST /api/routes/update-statistics', err);
+    return res.status(500).json({ error: 'שגיאה בעדכון סטטיסטיקות מסלולים' });
+  }
+});
+
 routesRouter.get('/', async (_req, res) => {
   try {
     const result = await query<RouteRow>(`${ROUTE_SELECT} ORDER BY r.route_id DESC`);

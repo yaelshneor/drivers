@@ -1,4 +1,4 @@
-import { Driver } from '../types';
+import { Driver, DriverRegionActivity } from '../types';
 import { apiDelete, apiGet, apiPost, apiPut } from './client';
 
 export function fetchDrivers(): Promise<Driver[]> {
@@ -7,6 +7,10 @@ export function fetchDrivers(): Promise<Driver[]> {
 
 export function fetchDriverById(id: string): Promise<Driver> {
   return apiGet<Driver>(`/api/drivers/${encodeURIComponent(id)}`);
+}
+
+export function fetchDriverRegionActivity(id: string): Promise<DriverRegionActivity> {
+  return apiGet<DriverRegionActivity>(`/api/drivers/${encodeURIComponent(id)}/region-activity`);
 }
 
 export function fetchLicenseTypes(): Promise<string[]> {

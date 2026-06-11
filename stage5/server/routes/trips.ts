@@ -41,11 +41,6 @@ tripsRouter.post('/', async (req, res) => {
   }
 
   try {
-    const driverCheck = await query('SELECT 1 FROM driver WHERE driverid = $1', [driver_id]);
-    if (!driverCheck.rowCount) {
-      return res.status(400).json({ error: 'נהג לא נמצא' });
-    }
-
     const vehicleResult = await query<{ capacity: number; licenseplate: number }>(
       'SELECT capacity, licenseplate FROM vehicle WHERE busid = $1',
       [bus_id],
@@ -88,6 +83,10 @@ tripsRouter.post('/', async (req, res) => {
     return res.status(201).json(trips.find((t) => t.id === String(trip_id)));
   } catch (err) {
     console.error('POST /api/trips', err);
+    const pgMsg = err instanceof Error ? err.message : '';
+    if (pgMsg.includes('does not exist')) {
+      return res.status(400).json({ error: 'נהג לא קיים — טריגר trg_validate_driver חסם את השיבוץ' });
+    }
     return res.status(500).json({ error: 'שגיאת שרת' });
   }
 });
