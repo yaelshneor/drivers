@@ -42,6 +42,13 @@
 - [תוכנית ראשית 2](#תוכנית-ראשית-2--route-maintenance--driver-assignment)
 - [טריגרים](#טריגר-1--trg_trip_update)
 
+### שלב ה
+- [שלב ה — כולו](#שלב-ה--אפליקציית-web)
+- [ארכיטקטורה וכלים](#ארכיטקטורה-וכלים)
+- [שילוב שלב ב ושלב ד](#שילוב-שלב-ב-ושלב-ד-באפליקציה)
+- [הוראות הפעלה](#הוראות-הפעלה)
+- [תמונות מסך](#תמונות-מסך)
+
 ---
 
 
@@ -1061,3 +1068,314 @@ VALUES (999999, CURRENT_DATE, 800, 40, 1, 99999, 1);
 * 2 תוכניות ראשיות ב-[`stage4/main.sql`](./stage4/main.sql) — כל אחת מפעילה 2 פונקציות ופרוצדורה אחת
 * 2 טריגרים — audit על UPDATE וולידציה על INSERT
 * תיעוד הרצה מלא לפי שלבי `main.sql` (כולל `update_route_statistics`)
+
+---
+
+# שלב ה — אפליקציית Web
+
+## תוכן עניינים
+
+1. [מבוא](#מבוא-3)
+2. [ארכיטקטורה וכלים](#ארכיטקטורה-וכלים)
+3. [שילוב שלב ב ושלב ד באפליקציה](#שילוב-שלב-ב-ושלב-ד-באפליקציה)
+4. [מסכים ופיצ'רים](#מסכים-ופיצרים)
+5. [הוראות הפעלה](#הוראות-הפעלה)
+6. [מבנה הפרויקט](#מבנה-הפרויקט)
+7. [API](#api)
+8. [תמונות מסך](#תמונות-מסך)
+9. [סיכום](#סיכום-3)
+
+---
+
+## מבוא
+
+בשלב ה' פותחה **אפליקציית Web מלאה** לניהול מערך נהגים, המחוברת לבסיס הנתונים המשולב משלב ג'. האפליקציה כוללת:
+
+* **ממשק נהג** — כניסה לפי מזהה, צפייה בנסיעות, לוח שנה ובקשת ביטול
+* **ממשק מנהל** — ניהול נהגים, כלי רכב, מסלולים, לוח נסיעות וטיפול בבקשות ביטול
+
+הקוד נמצא בתיקייה [`stage5/`](./stage5/). שאילתות משלב ב' ואובייקטי PL/pgSQL משלב ד' משולבים **בתוך המסכים** — לא בטאב נפרד.
+
+---
+
+## ארכיטקטורה וכלים
+
+### דרך העבודה
+
+1. **תכנון מסכים** — על בסיס המסכים משלב א' (AI Studio / עיצוב ראשוני)
+2. **Backend** — שרת Express שמדבר עם PostgreSQL דרך `pg`
+3. **Frontend** — React SPA שקורא ל-API
+4. **שילוב SQL** — שאילתות שלב ב' ופונקציות/פרוצדורות/טריגרים שלב ד' נקראים מהשרת בעת פעולות בממשק
+5. **התקנת אובייקטי שלב ד'** — בעליית השרת (`installStage4Objects`) נוצרים ב-DB הפונקציה, הפרוצדורה והטריגר
+
+### ארכיטקטורה
+
+```
+דפדפן (React + Vite :3000)
+        ↓  /api/*
+שרת Express (:3001)
+        ↓  SQL
+PostgreSQL (Docker :5432)
+```
+
+### כלים וטכנולוגיות
+
+| שכבה | טכנולוגיה | תפקיד |
+|------|-----------|--------|
+| Frontend | React 19, TypeScript | ממשק משתמש |
+| Frontend | Vite 6 | בנייה והרצה מקומית, proxy ל-API |
+| Frontend | Tailwind CSS 4 | עיצוב |
+| Frontend | Motion (Framer Motion) | אנימציות |
+| Frontend | Lucide React | אייקונים |
+| Backend | Node.js 18+, Express 4 | REST API |
+| Backend | tsx | הרצת TypeScript בשרת |
+| Database | PostgreSQL (Docker) | אחסון נתונים |
+| Database | pg | חיבור Node ↔ PostgreSQL |
+| כלים | pgAdmin (Docker :8080) | ניהול DB |
+| כלים | Git | גרסאות והגשה |
+
+---
+
+## שילוב שלב ב ושלב ד באפליקציה
+
+### שלב ב — שאילתות SQL
+
+| שאילתה | מקור | שימוש באפליקציה |
+|--------|------|-----------------|
+| `DRIVER_TRIP_SUMMARY_SQL` | [`stage2/scripts/Queries.sql`](./stage2/scripts/Queries.sql) (screen-7) | טאב **נהגים** — עמודת «נסיעות» |
+| `UPDATE_DRIVER_SQL` | [`stage2/scripts/Queries.sql`](./stage2/scripts/Queries.sql) (UPDATE) | **עריכת נהג** במודל |
+
+קובץ השאילתות בשרת: [`stage5/server/queries/stage2Queries.ts`](./stage5/server/queries/stage2Queries.ts)
+
+### שלב ד — PL/pgSQL
+
+| אובייקט | סוג | שימוש באפליקציה |
+|---------|-----|-----------------|
+| `get_driver_top_region_activity` | פונקציה | מודל **פרטי נהג** (כפתור עין) — ניתוח אזור פעילות |
+| `update_route_statistics` | פרוצדורה | טאב **מסלולים** — כפתור «עדכון סטטיסטיקות» |
+| `trg_validate_driver` | טריגר | **שיבוץ נסיעה** — אימות קיום נהג לפני `INSERT` ל-`trip` |
+
+התקנה אוטומטית: [`stage5/server/db/stage4Install.ts`](./stage5/server/db/stage4Install.ts)
+
+---
+
+## מסכים ופיצ'רים
+
+### כניסה
+
+* **כניסת נהג** — לפי `driverid` מה-DB
+* **כניסת מנהל** — גישה לכל הטאבים
+
+### ממשק נהג
+
+* רשימת נסיעות / לוח שנה
+* בקשת ביטול נסיעה
+* צפייה בפרטי נסיעה
+
+### ממשק מנהל
+
+| טאב | פעולות עיקריות |
+|-----|----------------|
+| **נהגים** | הוספה, עריכה, מחיקה, צפייה (כולל ניתוח אזור), עמודת ספירת נסיעות |
+| **כלים** | רשימת כלי רכב, הוספת כלי (`vehicle`) |
+| **מסלולים** | יצירת מסלול עם תחנות, צפייה בתחנות, עדכון סטטיסטיקות (פרוצדורה) |
+| **לוח נסיעות** | רשימה / לוח שנה, שיבוץ נסיעה (מופעל טריגר) |
+| **בקשות ביטול** | אישור / דחיית בקשות מנהגים |
+
+---
+
+## הוראות הפעלה
+
+### דרישות
+
+* **Node.js 18+** (בדיקה: `node -v`)
+* **Docker Desktop** (PostgreSQL + pgAdmin)
+* קובץ `.env` בשורש הפרויקט (ליד `docker-compose.yml`):
+
+```env
+DB_USER_SECRET=yael
+DB_PASSWORD_SECRET=yael
+DB_NAME_SECRET=try
+PGADMIN_EMAIL=your@email.com
+PGADMIN_PASSWORD=yourpassword
+```
+
+> `DB_NAME_SECRET` חייב להתאים לבסיס הנתונים המשוחזר/המשולב (למשל `try`, `stage3`).
+
+### שלב 1 — הרמת בסיס הנתונים
+
+משורש הפרויקט (`drivers/`):
+
+```powershell
+docker compose up -d
+```
+
+* PostgreSQL: `localhost:5432`
+* pgAdmin: http://localhost:8080
+
+### שלב 2 — התקנת תלויות
+
+```powershell
+cd stage5
+npm install
+```
+
+### שלב 3 — הרצה (שני טרמינלים)
+
+**טרמינל 1 — שרת API:**
+
+```powershell
+cd stage5
+npm run dev:server
+```
+
+בדיקה: http://localhost:3001/api/health  
+תשובה צפויה: `{"status":"ok","database":"connected"}`
+
+**טרמינל 2 — פרונט:**
+
+```powershell
+cd stage5
+npm run dev
+```
+
+פתיחת האפליקציה: http://localhost:3000
+
+### כניסה למערכת
+
+* **נהג:** הזיני `driverid` קיים (למשל `1001`, `1131`)
+* **מנהל:** לחצי «כניסת מנהל»
+
+### פתרון בעיות נפוצות
+
+| בעיה | פתרון |
+|------|--------|
+| `database: disconnected` | ודאי ש-Docker רץ ו-`.env` נכון |
+| שגיאת Node ישנה | שדרגי ל-Node 18+ |
+| פורט 3001 תפוס | עצרי תהליך ישן: `netstat -ano \| findstr :3001` ואז `taskkill /PID <מספר> /F` |
+| אובייקטי שלב ד' חסרים | הפעילי מחדש את `npm run dev:server` |
+
+---
+
+## מבנה הפרויקט
+
+```
+stage5/
+├── server/                 # Backend
+│   ├── index.ts            # נקודת כניסה
+│   ├── routes/             # drivers, trips, routes, vehicles, catalog
+│   ├── queries/            # שאילתות שלב ב'
+│   ├── db/
+│   │   ├── pool.ts         # חיבור PostgreSQL
+│   │   ├── migrate.ts      # מיגרציות
+│   │   └── stage4Install.ts # פונקציה, פרוצדורה, טריגר
+│   └── constants/
+├── src/                    # Frontend
+│   ├── App.tsx             # כל המסכים
+│   ├── api/                # קריאות ל-REST API
+│   └── types.ts
+├── package.json
+└── vite.config.ts          # proxy: /api → :3001
+```
+
+---
+
+## API
+
+| Method | Path | תיאור |
+|--------|------|--------|
+| GET | `/api/health` | בדיקת חיבור DB |
+| GET | `/api/drivers` | רשימת נהגים + ספירת נסיעות (שלב ב') |
+| GET | `/api/drivers/:id` | נהג בודד |
+| GET | `/api/drivers/:id/region-activity` | ניתוח אזור (שלב ד' — פונקציה) |
+| POST | `/api/drivers` | הוספת נהג |
+| PUT | `/api/drivers/:id` | עדכון נהג (שלב ב') |
+| DELETE | `/api/drivers/:id` | מחיקת נהג |
+| GET | `/api/vehicles` | רשימת כלי רכב |
+| POST | `/api/vehicles` | הוספת כלי |
+| GET | `/api/routes` | רשימת מסלולים |
+| POST | `/api/routes` | יצירת מסלול |
+| POST | `/api/routes/update-statistics` | עדכון משך מסלולים (שלב ד' — פרוצדורה) |
+| GET | `/api/trips` | רשימת נסיעות |
+| POST | `/api/trips` | שיבוץ נסיעה (מופעל טריגר) |
+| PATCH | `/api/trips/:id/status` | עדכון סטטוס (ביטול וכו') |
+| GET | `/api/regions`, `/api/sites`, `/api/stops` | קטלוג ליצירת מסלול |
+
+---
+
+## תמונות מסך
+
+צילומי המסכים נמצאים בתיקייה [`stage5/screenshots/`](./stage5/screenshots/).
+
+### מסך התחברות
+
+כניסת נהג לפי מזהה או כניסת מנהל.
+
+![מסך התחברות](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.20.59.jpeg>)
+
+### ממשק מנהל — נהגים
+
+טבלת נהגים עם עמודת ספירת נסיעות (שאילתת שלב ב'), ופעולות הוספה / עריכה / צפייה / מחיקה.
+
+![טאב נהגים](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.20.59 (1).jpeg>)
+
+הוספת נהג חדש:
+
+![הוספת נהג](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.00.jpeg>)
+
+מודל פרטי נהג — ניתוח אזור פעילות (`get_driver_top_region_activity`) ורשימת נסיעות:
+
+![ניתוח אזור פעילות](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.00 (1).jpeg>)
+
+### ממשק מנהל — כלי רכב
+
+![טאב כלים](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.00 (2).jpeg>)
+
+### ממשק מנהל — מסלולים
+
+כולל כפתור «עדכון סטטיסטיקות» (`update_route_statistics`):
+
+![טאב מסלולים](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.00 (3).jpeg>)
+
+### ממשק מנהל — לוח נסיעות
+
+תצוגת רשימה:
+
+![לוח נסיעות — רשימה](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.00 (4).jpeg>)
+
+תצוגת לוח שנה:
+
+![לוח נסיעות — לוח שנה](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.01.jpeg>)
+
+מודל שיבוץ נסיעה (מופעל טריגר `trg_validate_driver`):
+
+![שיבוץ נסיעה](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.01 (1).jpeg>)
+
+### ממשק נהג
+
+רשימת נסיעות אישית:
+
+![ממשק נהג — רשימה](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.01 (2).jpeg>)
+
+לוח שנה אישי:
+
+![ממשק נהג — לוח שנה](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.01 (3).jpeg>)
+
+סיכום וסטטיסטיקה:
+
+![ממשק נהג — סטטיסטיקה](<./stage5/screenshots/WhatsApp Image 2026-06-11 at 12.21.01 (4).jpeg>)
+
+---
+
+## סיכום
+
+בשלב ה' בוצעו:
+
+* אפליקציית Web מלאה (React + Express + PostgreSQL)
+* שני ממשקים: נהג ומנהל
+* שילוב **שתי שאילתות שלב ב'** (סיכום נסיעות, עדכון נהג) במסכים
+* שילוב **פונקציה, פרוצדורה וטריגר משלב ד'** במסכים
+* ניהול נהגים, כלי רכב, מסלולים, נסיעות ובקשות ביטול
+* תיעוד הרצה ו-API בדוח זה
+
+**TAG ב-Git:** יש ליצור tag לשלב ה' לפי הוראות הקורס.

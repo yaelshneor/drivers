@@ -1,20 +1,23 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# שלב ה — אפליקציית Web
 
-# Run and deploy your AI Studio app
+דוח שלב ה' המלא (הוראות הפעלה, כלים, שילוב שלב ב'/ד', תמונות מסך) נמצא בקובץ הראשי של הגיט:
 
-This contains everything you need to run your app locally.
+**[README.md בשורש הפרויקט](../README.md#שלב-ה--אפליקציית-web)**
 
-View your app in AI Studio: https://ai.studio/apps/ee7efa2d-e076-423d-b8d1-adb263ed3e24
+## הרצה מהירה
 
-## Run Locally
+```powershell
+# משורש הפרויקט
+docker compose up -d
 
-**Prerequisites:**  Node.js
+cd stage5
+npm install
+npm run dev:server   # טרמינל 1 — :3001
+npm run dev          # טרמינל 2 — :3000
+```
 
+פתחי: http://localhost:3000
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## תמונות מסך
+
+[צילומי המסכים](./screenshots/) · [דוח מלא עם תמונות](../README.md#תמונות-מסך)
