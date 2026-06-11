@@ -3,6 +3,7 @@ export interface Driver {
   name: string;
   phone: string;
   licensetype: string;
+  totalTrips?: number;
 }
 
 export interface Trip {

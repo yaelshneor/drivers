@@ -1,7 +1,7 @@
 ---------------------------------------
 --select queries --
+-- מותאם לבסיס משולב: vehicle (במקום bus), route, trip, driver, route_stop
 ---------------------------------------
-
 /* screen-7.png */
 -- שליפת כמות הנסיעות של כל נהג עבור מסך שבע סיכום נסיעות
 --version 1 !!!
@@ -12,7 +12,6 @@ SELECT
 FROM driver d
 LEFT JOIN trip t ON d.driverid = t.driver_id
 GROUP BY d.driverid, d.fullname;
-
 --version 2
 SELECT 
     d.driverid,
@@ -21,7 +20,6 @@ SELECT
      FROM trip t 
      WHERE t.driver_id = d.driverid) AS TotalTrips
 FROM driver d;
-
 /* screen-5.png */
 -- שליפת תאריכי הנסיעות של נהג 
 --version 1
@@ -31,15 +29,14 @@ SELECT
     r.route_name,
     r.start_location,
     r.end_location,
-    b.manufacturer,
-    b.model
+    v.manufacturer,
+    v.model
 FROM trip t
 JOIN route r ON t.route_id = r.route_id
-JOIN bus b ON t.bus_id = b.busid
+JOIN vehicle v ON t.bus_id = v.busid
 WHERE t.driver_id = 1001
 AND t.trip_date = DATE '2026-04-30'
 ORDER BY t.trip_date;
-
 --version 2
 SELECT *
 FROM trip t
@@ -49,7 +46,6 @@ AND t.route_id IN (
     SELECT r.route_id
     FROM route r
 );
-
 /* screen-9.png */
 -- מציגה למנהל את כל הבקשות לביטול !!!
 --version 1
@@ -59,13 +55,13 @@ SELECT
     r.route_name,
     r.start_location,
     r.end_location,
-    b.manufacturer,
-    b.model
+    v.manufacturer,
+    v.model
 FROM trip t
 JOIN route r ON t.route_id = r.route_id
-JOIN bus b ON t.bus_id = b.busid
+JOIN vehicle v ON t.bus_id = v.busid
+WHERE t.status = 'Pending Cancellation'
 ORDER BY t.trip_date;
-
 --version 2
 SELECT 
     t.trip_id,
@@ -76,8 +72,8 @@ SELECT
     (SELECT r.route_name 
      FROM route r 
      WHERE r.route_id = t.route_id) AS RouteName
-FROM trip t;
-
+FROM trip t
+WHERE t.status = 'Pending Cancellation';
 /* screen-3.png */
 --מסך נסיעות כללי כל הנסיעות העתידיות !!!
 --version 1
@@ -87,14 +83,13 @@ SELECT
     r.route_name,
     r.start_location,
     r.end_location,
-    b.manufacturer,
-    b.model
+    v.manufacturer,
+    v.model
 FROM trip t
 JOIN route r ON t.route_id = r.route_id
-JOIN bus b ON t.bus_id = b.busid
+JOIN vehicle v ON t.bus_id = v.busid
 WHERE t.trip_date >= CURRENT_DATE
 ORDER BY t.trip_date;
-
 --version 2
 SELECT 
     t.trip_id,
@@ -107,7 +102,6 @@ SELECT
      WHERE r.route_id = t.route_id) AS RouteName
 FROM trip t
 WHERE t.trip_date >= CURRENT_DATE;
-
 /* screen-1.png */
 -- מציגה פרטי נהג במסך ראשי !!!
 SELECT 
@@ -116,7 +110,6 @@ SELECT
     licensetype
 FROM driver
 WHERE driverid = 1002;
-
 -- היסטוריית נסיעות (לפני היום) !!!
 SELECT
     t.trip_id,
@@ -125,15 +118,14 @@ SELECT
     r.route_name,
     r.start_location,
     r.end_location,
-    b.manufacturer,
-    b.model
+    v.manufacturer,
+    v.model
 FROM trip t
 JOIN driver d ON t.driver_id = d.driverid
 JOIN route r ON t.route_id = r.route_id
-JOIN bus b ON t.bus_id = b.busid
+JOIN vehicle v ON t.bus_id = v.busid
 WHERE t.trip_date < CURRENT_DATE
 ORDER BY t.trip_date DESC;
-
 /* screen-2.png */
 -- רשימת נהגים 
 SELECT *
@@ -142,20 +134,19 @@ FROM (
         d.fullname AS DriverName,
         d.driverid,
         d.phone,
-        b.licenseplate::TEXT AS LicenseNumber,
+        v.licenseplate::TEXT AS LicenseNumber,
         CASE
-            WHEN b.capacity IS NULL THEN NULL
-            WHEN b.capacity <= 20 THEN 'מיניבוס'
-            WHEN b.capacity <= 50 THEN 'אוטובוס עירוני'
+            WHEN v.capacity IS NULL THEN NULL
+            WHEN v.capacity <= 20 THEN 'מיניבוס'
+            WHEN v.capacity <= 50 THEN 'אוטובוס עירוני'
             ELSE 'אוטובוס תיירותי'
         END AS Bus
     FROM driver d
     LEFT JOIN trip t ON t.driver_id = d.driverid
-    LEFT JOIN bus b ON b.busid = t.bus_id
+    LEFT JOIN vehicle v ON v.busid = t.bus_id
     ORDER BY d.driverid, t.trip_id DESC NULLS LAST
 ) drivers_list
 ORDER BY DriverName;
-
 /* screen-8.png */
 -- לוח נסיעות לנהג (חודש מלא) !!!
 SELECT
@@ -172,13 +163,9 @@ WHERE t.driver_id = 1131
     AND EXTRACT(YEAR FROM t.trip_date) = 2026
     AND EXTRACT(MONTH FROM t.trip_date) = 1
 ORDER BY t.trip_date, t.departure_time;
-
-
-
 ---------------------------------------
 --update queries --
 ---------------------------------------
-
 -- עדכון נהג לפי מזהה (לא משנים driverid — מפתח ראשי וקישורים לנסיעות)
 UPDATE driver
 SET
@@ -186,7 +173,6 @@ SET
     licensetype = 'B',
     phone = '050-1234567'
 WHERE driverid = 1;
-
 -- כפול 2 למשך משוער: כל המסלולים שמופיעים בהכי הרבה נסיעות (כולל תיקו)
 UPDATE route r
 SET estimated_duration_minutes = r.estimated_duration_minutes * 2
@@ -206,12 +192,9 @@ WHERE r.route_id IN (
         ) pr2
     )
 );
-
-
 ---------------------------------------
 --delete queries --
 ---------------------------------------
-
 -- מחיקת כל הנהגים שאין להם אף שורה ב-trip
 DELETE FROM driver d
 WHERE NOT EXISTS (
@@ -219,15 +202,13 @@ WHERE NOT EXISTS (
     FROM trip t
     WHERE t.driver_id = d.driverid
 );
-
--- מחיקת כל האוטובוסים שאין להם אף שורה ב-trip
-DELETE FROM bus
+-- מחיקת כל כלי התחבורה שאין להם אף שורה ב-trip
+DELETE FROM vehicle v
 WHERE NOT EXISTS (
     SELECT 1
     FROM trip t
-    WHERE t.bus_id = bus.busid
+    WHERE t.bus_id = v.busid
 );
-
 -- מחיקת נסיעות על מסלולים שמכילים תחנה שמקושרת ליותר משני טיולים שונים (COUNT DISTINCT trip_id > 2)
 DELETE FROM trip
 WHERE trip_id IN (
@@ -241,11 +222,4 @@ WHERE trip_id IN (
         GROUP BY rs2.stop_id
         HAVING COUNT(DISTINCT t2.trip_id) > 2
     )
-);
-
-DELETE FROM driver d
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM trip t
-    WHERE t.driver_id = d.driverid
 );

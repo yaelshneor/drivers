@@ -756,6 +756,7 @@ function ManagerDashboard({
                       <th className="px-6 py-4 font-semibold text-slate-600">ID</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">טלפון</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">סוג רישיון</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">נסיעות</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">פעולות</th>
                     </tr>
                   </thead>
@@ -768,6 +769,7 @@ function ManagerDashboard({
                         <td className="px-6 py-4 text-slate-500">{driver.id}</td>
                         <td className="px-6 py-4 text-slate-500">{driver.phone}</td>
                         <td className="px-6 py-4 text-slate-500">{driver.licensetype}</td>
+                        <td className="px-6 py-4 font-medium text-indigo-600">{driver.totalTrips ?? 0}</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
                             <button 
@@ -986,6 +988,7 @@ function ManagerDashboard({
               )}
             </section>
           )}
+
         </div>
       </main>
 
