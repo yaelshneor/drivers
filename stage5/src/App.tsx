@@ -1597,7 +1597,7 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <div>
                   <span className="block text-[10px] font-bold text-indigo-400 uppercase">אזור מוביל</span>
-                  <span className="font-medium">{activity.topRegionName ?? '—'}</span>
+                  <span className="font-medium">{activity.topRegionName ?? (activity.tripCount === 0 ? 'אין נסיעות' : '—')}</span>
                 </div>
                 <div>
                   <span className="block text-[10px] font-bold text-indigo-400 uppercase">נסיעות באזור</span>

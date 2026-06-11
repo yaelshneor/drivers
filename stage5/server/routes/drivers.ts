@@ -46,6 +46,17 @@ driversRouter.get('/license-types', (_req, res) => {
   return res.json([...LICENSE_TYPES]);
 });
 
+const TOP_REGION_NAME_SQL = `
+  SELECT reg.regio_name
+  FROM trip t
+  JOIN route r ON r.route_id = t.route_id
+  JOIN region reg ON reg.region_id = r.region_id
+  WHERE t.driver_id = $1
+  GROUP BY reg.region_id, reg.regio_name
+  ORDER BY COUNT(*) DESC
+  LIMIT 1
+`;
+
 driversRouter.get('/:id/region-activity', async (req, res) => {
   const id = Number.parseInt(req.params.id, 10);
   if (Number.isNaN(id)) {
@@ -55,7 +66,8 @@ driversRouter.get('/:id/region-activity', async (req, res) => {
   try {
     const result = await query<{
       driver_name: string;
-      top_region_name: string | null;
+      top_region?: number | null;
+      top_region_name?: string | null;
       trip_count: number;
       route_count: number;
       status: string;
@@ -66,9 +78,24 @@ driversRouter.get('/:id/region-activity', async (req, res) => {
     }
 
     const row = result.rows[0];
+    let topRegionName = row.top_region_name?.trim() || null;
+
+    if (!topRegionName) {
+      const nameResult = await query<{ regio_name: string }>(TOP_REGION_NAME_SQL, [id]);
+      topRegionName = nameResult.rows[0]?.regio_name?.trim() || null;
+    }
+
+    if (!topRegionName && row.top_region != null) {
+      const byId = await query<{ regio_name: string }>(
+        'SELECT regio_name FROM region WHERE region_id = $1',
+        [row.top_region],
+      );
+      topRegionName = byId.rows[0]?.regio_name?.trim() || null;
+    }
+
     return res.json({
       driverName: row.driver_name,
-      topRegionName: row.top_region_name,
+      topRegionName,
       tripCount: row.trip_count,
       routeCount: row.route_count,
       status: row.status,
