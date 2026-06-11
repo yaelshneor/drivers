@@ -4,18 +4,18 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Calendar, 
-  Bus, 
-  User, 
-  LogOut, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Eye, 
-  Check, 
-  X, 
+import {
+  Users,
+  Calendar,
+  Bus,
+  User,
+  LogOut,
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  Check,
+  X,
   AlertCircle,
   MapPin,
   Clock,
@@ -56,7 +56,7 @@ export default function App() {
   const [managerTab, setManagerTab] = useState<ManagerTab>('drivers');
   const [driverViewMode, setDriverViewMode] = useState<DriverViewMode>('list');
   const [managerScheduleMode, setManagerScheduleMode] = useState<DriverViewMode>('list');
-  
+ 
   // Forms state
   const [isDriverFormOpen, setIsDriverFormOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
@@ -237,9 +237,9 @@ export default function App() {
 
         {/* מסך נהג */}
         {view === 'driver' && currentDriver && (
-          <DriverDashboard 
-            driver={currentDriver} 
-            trips={trips.filter(t => t.driverId === currentDriver.id)} 
+          <DriverDashboard
+            driver={currentDriver}
+            trips={trips.filter(t => t.driverId === currentDriver.id)}
             onLogout={handleLogout}
             onRequestCancellation={requestCancellation}
             viewMode={driverViewMode}
@@ -251,7 +251,7 @@ export default function App() {
 
         {/* מסך מנהל */}
         {view === 'manager' && (
-          <ManagerDashboard 
+          <ManagerDashboard
             drivers={drivers}
             trips={trips}
             routes={routes}
@@ -280,20 +280,20 @@ export default function App() {
       {/* מודלים */}
       {/* מודל הוספה/עריכת נהג */}
       {isDriverFormOpen && (
-        <DriverFormModal 
-          driver={editingDriver} 
-          onClose={() => setIsDriverFormOpen(false)} 
-          onSave={editingDriver ? updateDriver : addDriver} 
+        <DriverFormModal
+          driver={editingDriver}
+          onClose={() => setIsDriverFormOpen(false)}
+          onSave={editingDriver ? updateDriver : addDriver}
         />
-      )} 
-      
+      )}
+     
 
       {/* מודל שיבוץ נסיעה */}
       {isAssignmentFormOpen && (
-        <AssignmentFormModal 
+        <AssignmentFormModal
           drivers={drivers}
-          onClose={() => setIsAssignmentFormOpen(false)} 
-          onSave={assignTrip} 
+          onClose={() => setIsAssignmentFormOpen(false)}
+          onSave={assignTrip}
         />
       )}
 
@@ -315,9 +315,9 @@ export default function App() {
 
       {/* מודל פרטי נסיעה */}
       {selectedTripDetails && (
-        <TripDetailsModal 
-          trip={selectedTripDetails} 
-          onClose={() => setSelectedTripDetails(null)} 
+        <TripDetailsModal
+          trip={selectedTripDetails}
+          onClose={() => setSelectedTripDetails(null)}
           onRequestCancellation={() => requestCancellation(selectedTripDetails.id)}
           isManagerView={view === 'manager'}
           driverName={drivers.find(d => d.id === selectedTripDetails.driverId)?.name}
@@ -327,10 +327,10 @@ export default function App() {
 
       {/* מודל פרטי נהג */}
       {selectedDriverDetails && (
-        <DriverDetailsModal 
-          driver={selectedDriverDetails} 
+        <DriverDetailsModal
+          driver={selectedDriverDetails}
           trips={trips.filter(t => t.driverId === selectedDriverDetails.id)}
-          onClose={() => setSelectedDriverDetails(null)} 
+          onClose={() => setSelectedDriverDetails(null)}
         />
       )}
     </div>
@@ -349,7 +349,7 @@ function LoginScreen({ onLogin, onManagerLogin }: { onLogin: (id: string) => voi
   const [id, setId] = useState('');
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -363,31 +363,31 @@ function LoginScreen({ onLogin, onManagerLogin }: { onLogin: (id: string) => voi
         </div>
         <h1 className="text-2xl font-bold text-center mb-2">מערכת ניהול נהגים</h1>
         <p className="text-slate-500 text-center mb-8">אנא הכנס מזהה נהג כדי להמשיך</p>
-        
+       
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">מזהה נהג (ID)</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={id}
               onChange={(e) => setId(e.target.value)}
               placeholder="לדוגמה: 1001"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
             />
           </div>
-          <button 
+          <button
             onClick={() => onLogin(id)}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition-colors shadow-lg shadow-indigo-200"
           >
             כניסת נהג
           </button>
-          
+         
           <div className="relative py-4">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
             <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-500">או</span></div>
           </div>
-          
-          <button 
+         
+          <button
             onClick={onManagerLogin}
             className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
           >
@@ -404,18 +404,18 @@ function LoginScreen({ onLogin, onManagerLogin }: { onLogin: (id: string) => voi
 // מסך נהג — DriverDashboard
 // רשימת נסיעות, לוח שנה, סיכום סטטיסטי, בקשות ביטול
 // -----------------------------------------------------------------------------
-function DriverDashboard({ 
-  driver, 
-  trips, 
-  onLogout, 
+function DriverDashboard({
+  driver,
+  trips,
+  onLogout,
   onRequestCancellation,
   viewMode,
   setViewMode,
   onSelectTrip,
   onAcknowledgeRejection
-}: { 
-  driver: Driver, 
-  trips: Trip[], 
+}: {
+  driver: Driver,
+  trips: Trip[],
   onLogout: () => void,
   onRequestCancellation: (id: string) => void,
   viewMode: DriverViewMode,
@@ -426,7 +426,7 @@ function DriverDashboard({
   const rejectedTrips = trips.filter(t => t.status === 'cancellation_rejected');
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="max-w-4xl mx-auto p-4 md:p-8"
@@ -437,7 +437,7 @@ function DriverDashboard({
           <p className="text-slate-500">מזהה: {driver.id} | רישיון: {driver.licensetype}</p>
         </div>
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={onLogout}
             className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
             title="התנתק"
@@ -450,7 +450,7 @@ function DriverDashboard({
       <section className="space-y-6">
         {viewMode === 'list' && (
           <div className="grid grid-cols-2 gap-4 mb-2">
-            <button 
+            <button
               onClick={() => setViewMode('calendar')}
               className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-300 hover:bg-indigo-50/30 transition-all flex flex-col items-center gap-2 text-slate-700 font-bold"
             >
@@ -459,7 +459,7 @@ function DriverDashboard({
               </div>
               לוח שנה
             </button>
-            <button 
+            <button
               onClick={() => setViewMode('stats')}
               className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-300 hover:bg-indigo-50/30 transition-all flex flex-col items-center gap-2 text-slate-700 font-bold"
             >
@@ -472,7 +472,7 @@ function DriverDashboard({
         )}
 
         {viewMode !== 'list' && (
-          <button 
+          <button
             onClick={() => setViewMode('list')}
             className="flex items-center gap-2 text-indigo-600 font-bold hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all w-fit"
           >
@@ -492,13 +492,13 @@ function DriverDashboard({
               </div>
             </div>
             <div className="flex gap-2 w-full md:w-auto">
-              <button 
+              <button
                 onClick={() => onSelectTrip(trip)}
                 className="flex-1 md:flex-none bg-white border border-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-100 transition-all"
               >
                 צפה בנסיעה
               </button>
-              <button 
+              <button
                 onClick={() => onAcknowledgeRejection(trip.id)}
                 className="flex-1 md:flex-none bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-100"
               >
@@ -512,7 +512,7 @@ function DriverDashboard({
           {viewMode === 'stats' ? <BarChart2 className="text-indigo-600" /> : <Calendar className="text-indigo-600" />}
           {viewMode === 'list' ? 'רשימת הנסיעות שלך' : viewMode === 'calendar' ? 'לוח הנסיעות שלך' : 'סיכום וסטטיסטיקה'}
         </h2>
-        
+       
         {trips.length === 0 ? (
           <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-300 text-center">
             <p className="text-slate-500">אין נסיעות מתוכננות כרגע</p>
@@ -522,10 +522,10 @@ function DriverDashboard({
             <div className="grid gap-4">
               {trips.map(trip => (
                 <div key={trip.id}>
-                  <TripCard 
-                    trip={trip} 
-                    isDriverView={true} 
-                    onRequestCancellation={() => onRequestCancellation(trip.id)} 
+                  <TripCard
+                    trip={trip}
+                    isDriverView={true}
+                    onRequestCancellation={() => onRequestCancellation(trip.id)}
                     onSelect={() => onSelectTrip(trip)}
                   />
                 </div>
@@ -545,22 +545,22 @@ function DriverDashboard({
 // -----------------------------------------------------------------------------
 // תת-מסך: לוח שנה — CalendarView
 // -----------------------------------------------------------------------------
-function CalendarView({ 
-  trips, 
-  onSelectTrip, 
-  isManagerView = false, 
-  drivers = [] 
-}: { 
-  trips: Trip[], 
+function CalendarView({
+  trips,
+  onSelectTrip,
+  isManagerView = false,
+  drivers = []
+}: {
+  trips: Trip[],
   onSelectTrip: (trip: Trip) => void,
   isManagerView?: boolean,
   drivers?: Driver[]
 }) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  
+ 
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
-  
+ 
   const monthNames = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
   const dayNames = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"];
 
@@ -598,12 +598,12 @@ function CalendarView({
               <span className="text-xs font-medium text-slate-400">{day}</span>
               <div className="mt-0.5 space-y-0.5">
                 {dayTrips.map(trip => (
-                  <button 
+                  <button
                     key={trip.id}
                     onClick={() => onSelectTrip(trip)}
                     className={`w-full text-right px-1.5 py-0.5 rounded text-[9px] font-bold truncate transition-all ${
-                      trip.status === 'cancelled' ? 'bg-red-100 text-red-700' : 
-                      trip.status === 'pending_cancellation' ? 'bg-amber-100 text-amber-700' : 
+                      trip.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                      trip.status === 'pending_cancellation' ? 'bg-amber-100 text-amber-700' :
                       trip.status === 'cancellation_rejected' ? 'bg-red-100 text-red-700 border border-red-300' :
                       'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
                     }`}
@@ -633,16 +633,16 @@ function CalendarView({
 // -----------------------------------------------------------------------------
 // מודל פרטי נסיעה — TripDetailsModal
 // -----------------------------------------------------------------------------
-function TripDetailsModal({ 
-  trip, 
-  onClose, 
+function TripDetailsModal({
+  trip,
+  onClose,
   onRequestCancellation,
   isManagerView = false,
   driverName,
   onAcknowledgeRejection
-}: { 
-  trip: Trip, 
-  onClose: () => void, 
+}: {
+  trip: Trip,
+  onClose: () => void,
   onRequestCancellation: () => void,
   isManagerView?: boolean,
   driverName?: string,
@@ -650,7 +650,7 @@ function TripDetailsModal({
 }) {
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
@@ -669,20 +669,20 @@ function TripDetailsModal({
               </div>
             </div>
           )}
-          <TripCard 
-            trip={trip} 
-            isDriverView={!isManagerView} 
+          <TripCard
+            trip={trip}
+            isDriverView={!isManagerView}
             onRequestCancellation={onRequestCancellation}
             driverName={driverName}
           />
         </div>
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
           {trip.status === 'cancellation_rejected' && !isManagerView && onAcknowledgeRejection && (
-            <button 
+            <button
               onClick={() => {
                 onAcknowledgeRejection(trip.id);
                 onClose();
-              }} 
+              }}
               className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-red-100"
             >
               אישור והבנתי
@@ -701,13 +701,13 @@ function TripDetailsModal({
 // מסך מנהל — ManagerDashboard
 // טאבים: נהגים | כלים | מסלולים | לוח נסיעות | בקשות ביטול
 // -----------------------------------------------------------------------------
-function ManagerDashboard({ 
-  drivers, 
+function ManagerDashboard({
+  drivers,
   trips,
   routes,
   vehicles,
-  activeTab, 
-  setActiveTab, 
+  activeTab,
+  setActiveTab,
   onLogout,
   onAddDriver,
   onEditDriver,
@@ -723,8 +723,8 @@ function ManagerDashboard({
   onSelectDriver,
   assignNotice,
   onDismissAssignNotice
-}: { 
-  drivers: Driver[], 
+}: {
+  drivers: Driver[],
   trips: Trip[],
   routes: RouteOption[],
   vehicles: BusOption[],
@@ -750,7 +750,7 @@ function ManagerDashboard({
   const [selectedRouteStops, setSelectedRouteStops] = useState<RouteOption | null>(null);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="flex flex-col h-screen"
@@ -766,11 +766,11 @@ function ManagerDashboard({
             <TabButton active={activeTab === 'vehicles'} onClick={() => setActiveTab('vehicles')} icon={<Bus size={18} />} label="כלים" />
             <TabButton active={activeTab === 'routes'} onClick={() => setActiveTab('routes')} icon={<MapPin size={18} />} label="מסלולים" />
             <TabButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar size={18} />} label="לוח נסיעות" />
-            <TabButton 
-              active={activeTab === 'requests'} 
-              onClick={() => setActiveTab('requests')} 
-              icon={<AlertCircle size={18} />} 
-              label="בקשות ביטול" 
+            <TabButton
+              active={activeTab === 'requests'}
+              onClick={() => setActiveTab('requests')}
+              icon={<AlertCircle size={18} />}
+              label="בקשות ביטול"
               badge={pendingRequests.length > 0 ? pendingRequests.length : undefined}
             />
           </div>
@@ -803,7 +803,7 @@ function ManagerDashboard({
             <section>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">ניהול נהגים</h2>
-                <button 
+                <button
                   onClick={onAddDriver}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-md"
                 >
@@ -835,9 +835,9 @@ function ManagerDashboard({
                         <td className="px-6 py-4 font-medium text-indigo-600">{driver.totalTrips ?? 0}</td>
                         <td className="px-6 py-4">
                           <div className="flex gap-2">
-                            <button 
+                            <button
                               onClick={() => onSelectDriver(driver)}
-                              className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all" 
+                              className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all"
                               title="צפייה"
                             >
                               <Eye size={18} />
@@ -977,20 +977,20 @@ function ManagerDashboard({
                 <h2 className="text-2xl font-bold">לוח נסיעות כללי</h2>
                 <div className="flex items-center gap-4">
                   <div className="bg-white p-1 rounded-xl border border-slate-200 flex">
-                    <button 
+                    <button
                       onClick={() => setScheduleMode('list')}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${scheduleMode === 'list' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
                     >
                       רשימה
                     </button>
-                    <button 
+                    <button
                       onClick={() => setScheduleMode('calendar')}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${scheduleMode === 'calendar' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
                     >
                       לוח שנה
                     </button>
                   </div>
-                  <button 
+                  <button
                     onClick={onAssignTrip}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-md"
                   >
@@ -999,7 +999,7 @@ function ManagerDashboard({
                   </button>
                 </div>
               </div>
-              
+             
               {scheduleMode === 'list' ? (
                 trips.length === 0 ? (
                   <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-300 text-center">
@@ -1009,9 +1009,9 @@ function ManagerDashboard({
                 <div className="grid gap-4">
                   {trips.map(trip => (
                     <div key={trip.id}>
-                      <TripCard 
-                        trip={trip} 
-                        isDriverView={false} 
+                      <TripCard
+                        trip={trip}
+                        isDriverView={false}
                         driverName={drivers.find(d => d.id === trip.driverId)?.name}
                         onSelect={() => onSelectTrip(trip)}
                       />
@@ -1049,14 +1049,14 @@ function ManagerDashboard({
                         </div>
                       </div>
                       <div className="flex gap-2 w-full md:w-auto">
-                        <button 
+                        <button
                           onClick={() => onCancellationResponse(trip.id, true)}
                           className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-all"
                         >
                           <Check size={18} />
                           אשר ביטול
                         </button>
-                        <button 
+                        <button
                           onClick={() => onCancellationResponse(trip.id, false)}
                           className="flex-1 md:flex-none bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-all"
                         >
@@ -1147,16 +1147,16 @@ function RouteStopsModal({ route, onClose }: { route: RouteOption, onClose: () =
 // רכיבי עזר
 // =============================================================================
 
-function TabButton({ active, onClick, icon, label, badge, className = "" }: { 
-  active: boolean, 
-  onClick: () => void, 
-  icon: React.ReactNode, 
+function TabButton({ active, onClick, icon, label, badge, className = "" }: {
+  active: boolean,
+  onClick: () => void,
+  icon: React.ReactNode,
   label: string,
   badge?: number,
   className?: string
 }) {
   return (
-    <button 
+    <button
       onClick={onClick}
       className={`px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-all relative ${
         active ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'
@@ -1233,7 +1233,7 @@ function TripCard({ trip, isDriverView, onRequestCancellation, driverName, onSel
   };
 
   return (
-    <div 
+    <div
       onClick={onSelect}
       className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md cursor-pointer ${trip.status === 'cancelled' ? 'opacity-60' : ''}`}
     >
@@ -1292,10 +1292,10 @@ function TripCard({ trip, isDriverView, onRequestCancellation, driverName, onSel
 
         {isDriverView && trip.status === 'scheduled' && (
           <div className="pt-4 border-t border-slate-100 flex justify-end">
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
-                onRequestCancellation();
+                onRequestCancellation?.();
               }}
               className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2"
             >
@@ -1412,7 +1412,7 @@ function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, o
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
@@ -1425,8 +1425,8 @@ function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, o
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">שם מלא</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -1434,8 +1434,8 @@ function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, o
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">מזהה (ID)</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={formData.id}
                 disabled={!!driver}
                 onChange={(e) => setFormData({...formData, id: e.target.value})}
@@ -1445,8 +1445,8 @@ function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, o
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">מספר טלפון</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
               className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -1468,7 +1468,7 @@ function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, o
         </div>
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 text-slate-600 font-medium">ביטול</button>
-          <button 
+          <button
             onClick={() => formData.name && formData.id && formData.licensetype && onSave(formData)}
             disabled={!formData.name || !formData.id || !formData.licensetype}
             className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-100"
@@ -1613,7 +1613,7 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"
@@ -1685,8 +1685,8 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
                       <div className="text-xs text-slate-500">{trip.date} | {trip.time}</div>
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${
-                      trip.status === 'cancelled' ? 'bg-red-100 text-red-700' : 
-                      trip.status === 'pending_cancellation' ? 'bg-amber-100 text-amber-700' : 
+                      trip.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                      trip.status === 'pending_cancellation' ? 'bg-amber-100 text-amber-700' :
                       'bg-emerald-100 text-emerald-700'
                     }`}>
                       {trip.status === 'cancelled' ? 'מבוטל' : trip.status === 'pending_cancellation' ? 'ממתין' : 'מתוכנן'}
@@ -1942,7 +1942,7 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden"
@@ -1959,7 +1959,7 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">נהג</label>
-                  <select 
+                  <select
                     value={formData.driverId}
                     onChange={(e) => setFormData({ ...formData, driverId: e.target.value })}
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -1972,7 +1972,7 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">אוטובוס</label>
-                  <select 
+                  <select
                     value={formData.busId}
                     onChange={(e) => setFormData({ ...formData, busId: e.target.value })}
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -1987,7 +1987,7 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">מסלול</label>
-                  <select 
+                  <select
                     value={formData.routeId}
                     onChange={(e) => setFormData({ ...formData, routeId: e.target.value })}
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -2032,8 +2032,8 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">תאריך</label>
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -2041,8 +2041,8 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">שעה</label>
-                  <input 
-                    type="time" 
+                  <input
+                    type="time"
                     value={formData.time}
                     onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                     className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
@@ -2058,7 +2058,7 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
         </div>
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 text-slate-600 font-medium">ביטול</button>
-          <button 
+          <button
             onClick={() => canSubmit && onSave(formData)}
             disabled={!canSubmit || loading}
             className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-100"
