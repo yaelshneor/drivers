@@ -55,7 +55,7 @@ driversRouter.get('/:id/region-activity', async (req, res) => {
   try {
     const result = await query<{
       driver_name: string;
-      top_region: number | null;
+      top_region_name: string | null;
       trip_count: number;
       route_count: number;
       status: string;
@@ -68,7 +68,7 @@ driversRouter.get('/:id/region-activity', async (req, res) => {
     const row = result.rows[0];
     return res.json({
       driverName: row.driver_name,
-      topRegion: row.top_region,
+      topRegionName: row.top_region_name,
       tripCount: row.trip_count,
       routeCount: row.route_count,
       status: row.status,

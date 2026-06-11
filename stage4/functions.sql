@@ -52,7 +52,7 @@ SELECT get_driver_monthly_trips(1131, 1, 2026);
 CREATE OR REPLACE FUNCTION get_driver_top_region_activity(p_driver_id INT)
 RETURNS TABLE (
     driver_name TEXT,
-    top_region INT,
+    top_region_name TEXT,
     trip_count INT,
     route_count INT,
     status TEXT
@@ -61,6 +61,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     v_top_region INT;
+    v_region_name TEXT;
     v_trip_count INT;
     v_route_count INT;
 BEGIN
@@ -69,16 +70,17 @@ BEGIN
         RAISE EXCEPTION 'Driver not found';
     END IF;
 
-    SELECT r.region_id INTO v_top_region
+    SELECT r.region_id, reg.regio_name INTO v_top_region, v_region_name
     FROM trip t
     JOIN route r ON t.route_id = r.route_id
+    JOIN region reg ON reg.region_id = r.region_id
     WHERE t.driver_id = p_driver_id
-    GROUP BY r.region_id
+    GROUP BY r.region_id, reg.regio_name
     ORDER BY COUNT(*) DESC
     LIMIT 1;
 
     IF v_top_region IS NULL THEN
-        top_region := NULL;
+        top_region_name := NULL;
         trip_count := 0;
         route_count := 0;
         status := 'אין פעילות באזור';
@@ -96,7 +98,7 @@ BEGIN
     JOIN route r ON t.route_id = r.route_id
     WHERE t.driver_id = p_driver_id AND r.region_id = v_top_region;
 
-    top_region := v_top_region;
+    top_region_name := v_region_name;
     trip_count := v_trip_count;
     route_count := v_route_count;
 

@@ -8,7 +8,7 @@ export interface Driver {
 
 export interface DriverRegionActivity {
   driverName: string;
-  topRegion: number | null;
+  topRegionName: string | null;
   tripCount: number;
   routeCount: number;
   status: string;

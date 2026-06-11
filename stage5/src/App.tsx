@@ -67,6 +67,7 @@ export default function App() {
   const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false);
   const [selectedTripDetails, setSelectedTripDetails] = useState<Trip | null>(null);
   const [selectedDriverDetails, setSelectedDriverDetails] = useState<Driver | null>(null);
+  const [assignNotice, setAssignNotice] = useState('');
 
   const patchTrip = (updated: Trip) => {
     setTrips((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
@@ -157,9 +158,13 @@ export default function App() {
 
   const assignTrip = async (data: TripAssignment) => {
     try {
-      const created = await createTrip(data);
-      setTrips((prev) => [...prev, created]);
+      await createTrip(data);
+      const [allTrips, allDrivers] = await Promise.all([fetchTrips(), fetchDrivers()]);
+      setTrips(allTrips);
+      setDrivers(allDrivers);
       setIsAssignmentFormOpen(false);
+      setManagerTab('schedule');
+      setAssignNotice('שיבוץ הצליח — טריגר trg_validate_driver אימת את הנהג והנסיעה נוספה ללוח');
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'שגיאה בשיבוץ נסיעה');
     }
@@ -265,6 +270,8 @@ export default function App() {
             setScheduleMode={setManagerScheduleMode}
             onSelectTrip={setSelectedTripDetails}
             onSelectDriver={setSelectedDriverDetails}
+            assignNotice={assignNotice}
+            onDismissAssignNotice={() => setAssignNotice('')}
           />
         )}
       </AnimatePresence>
@@ -681,7 +688,9 @@ function ManagerDashboard({
   scheduleMode,
   setScheduleMode,
   onSelectTrip,
-  onSelectDriver
+  onSelectDriver,
+  assignNotice,
+  onDismissAssignNotice
 }: { 
   drivers: Driver[], 
   trips: Trip[],
@@ -701,7 +710,9 @@ function ManagerDashboard({
   scheduleMode: DriverViewMode,
   setScheduleMode: (mode: DriverViewMode) => void,
   onSelectTrip: (trip: Trip) => void,
-  onSelectDriver: (driver: Driver) => void
+  onSelectDriver: (driver: Driver) => void,
+  assignNotice: string,
+  onDismissAssignNotice: () => void
 }) {
   const pendingRequests = trips.filter(t => t.status === 'pending_cancellation');
   const [selectedRouteStops, setSelectedRouteStops] = useState<RouteOption | null>(null);
@@ -749,6 +760,12 @@ function ManagerDashboard({
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50">
         <div className="max-w-6xl mx-auto">
+          {assignNotice && (
+            <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex justify-between items-start gap-3">
+              <span className="text-sm">{assignNotice}</span>
+              <button onClick={onDismissAssignNotice} className="text-emerald-600 hover:text-emerald-800 shrink-0"><X size={18} /></button>
+            </div>
+          )}
           {activeTab === 'drivers' && (
             <section>
               <div className="flex justify-between items-center mb-6">
@@ -948,6 +965,11 @@ function ManagerDashboard({
               </div>
               
               {scheduleMode === 'list' ? (
+                trips.length === 0 ? (
+                  <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-300 text-center">
+                    <p className="text-slate-500">אין נסיעות — לחצי &quot;שיבוץ נסיעה&quot; כדי להוסיף</p>
+                  </div>
+                ) : (
                 <div className="grid gap-4">
                   {trips.map(trip => (
                     <div key={trip.id}>
@@ -960,6 +982,7 @@ function ManagerDashboard({
                     </div>
                   ))}
                 </div>
+                )
               ) : (
                 <CalendarView trips={trips} onSelectTrip={onSelectTrip} isManagerView={true} drivers={drivers} />
               )}
@@ -1574,7 +1597,7 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 <div>
                   <span className="block text-[10px] font-bold text-indigo-400 uppercase">אזור מוביל</span>
-                  <span className="font-medium">{activity.topRegion ?? '—'}</span>
+                  <span className="font-medium">{activity.topRegionName ?? '—'}</span>
                 </div>
                 <div>
                   <span className="block text-[10px] font-bold text-indigo-400 uppercase">נסיעות באזור</span>
@@ -1966,6 +1989,10 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
                   />
                 </div>
               </div>
+
+              <p className="text-xs text-slate-500 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                בעת שמירה, טריגר <strong>trg_validate_driver</strong> יאמת ב-DB שהנהג קיים לפני הוספת הנסיעה.
+              </p>
             </>
           )}
         </div>
