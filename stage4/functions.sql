@@ -49,6 +49,8 @@ SELECT get_driver_monthly_trips(1131, 1, 2026);
 --function 2: to get the top region activity for a driver
 ---------------------------------------
 
+DROP FUNCTION IF EXISTS get_driver_top_region_activity(integer);
+
 CREATE OR REPLACE FUNCTION get_driver_top_region_activity(p_driver_id INT)
 RETURNS TABLE (
     driver_name TEXT,

@@ -14,34 +14,33 @@ DECLARE
     v_plate_number VARCHAR;
 BEGIN
     WHILE i < p_count LOOP
+
         -- נהג אקראי
         SELECT driverid
         INTO v_driver_id
         FROM driver
         ORDER BY RANDOM()
         LIMIT 1;
+
         -- מסלול אקראי
         SELECT route_id
         INTO v_route_id
         FROM route
         ORDER BY RANDOM()
         LIMIT 1;
+
         -- אוטובוס אקראי
-        SELECT busid
-        INTO v_bus_id
-        FROM bus
-        ORDER BY RANDOM()
-        LIMIT 1;
-        -- רכב (plate_number) רק מ-vehicle!
-        SELECT plate_number
-        INTO v_plate_number
+        SELECT busid, licenseplate
+        INTO v_bus_id, v_plate_number
         FROM vehicle
         ORDER BY RANDOM()
         LIMIT 1;
+
         -- יצירת trip_id חדש
         SELECT COALESCE(MAX(trip_id), 0) + 1
         INTO v_trip_id
         FROM trip;
+
         -- הכנסת נסיעה חדשה
         INSERT INTO trip (
             trip_id,
@@ -63,8 +62,78 @@ BEGIN
             v_driver_id,
             v_bus_id
         );
+
         i := i + 1;
     END LOOP;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error occurred: %', SQLERRM;
+END;
+$$;CREATE OR REPLACE PROCEDURE create_random_trips(p_count INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    i INT := 0;
+    v_trip_id INT;
+    v_driver_id INT;
+    v_route_id INT;
+    v_bus_id INT;
+    v_plate_number VARCHAR;
+BEGIN
+    WHILE i < p_count LOOP
+
+        -- נהג אקראי
+        SELECT driverid
+        INTO v_driver_id
+        FROM driver
+        ORDER BY RANDOM()
+        LIMIT 1;
+
+        -- מסלול אקראי
+        SELECT route_id
+        INTO v_route_id
+        FROM route
+        ORDER BY RANDOM()
+        LIMIT 1;
+
+        -- אוטובוס אקראי
+        SELECT busid, licenseplate
+        INTO v_bus_id, v_plate_number
+        FROM vehicle
+        ORDER BY RANDOM()
+        LIMIT 1;
+
+        -- יצירת trip_id חדש
+        SELECT COALESCE(MAX(trip_id), 0) + 1
+        INTO v_trip_id
+        FROM trip;
+
+        -- הכנסת נסיעה חדשה
+        INSERT INTO trip (
+            trip_id,
+            trip_date,
+            departure_time,
+            available_seats,
+            route_id,
+            plate_number,
+            driver_id,
+            bus_id
+        )
+        VALUES (
+            v_trip_id,
+            CURRENT_DATE + i,
+            FLOOR(RANDOM() * 2400),
+            FLOOR(RANDOM() * 50) + 10,
+            v_route_id,
+            v_plate_number,
+            v_driver_id,
+            v_bus_id
+        );
+
+        i := i + 1;
+    END LOOP;
+
 EXCEPTION
     WHEN OTHERS THEN
         RAISE NOTICE 'Error occurred: %', SQLERRM;

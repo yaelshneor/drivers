@@ -1186,19 +1186,14 @@ PostgreSQL (Docker :5432)
 
 ## הוראות הפעלה
 
+> קובץ הוראות מפורט בתיקיית stage5: [`stage5/הוראות-הפעלה.md`](./stage5/הוראות-הפעלה.md)
+
 ### דרישות
 
 * **Node.js 18+** (בדיקה: `node -v`)
 * **Docker Desktop** (PostgreSQL + pgAdmin)
 * קובץ `.env` בשורש הפרויקט (ליד `docker-compose.yml`):
 
-```env
-DB_USER_SECRET=yael
-DB_PASSWORD_SECRET=yael
-DB_NAME_SECRET=try
-PGADMIN_EMAIL=your@email.com
-PGADMIN_PASSWORD=yourpassword
-```
 
 > `DB_NAME_SECRET` חייב להתאים לבסיס הנתונים המשוחזר/המשולב (למשל `try`, `stage3`).
 
@@ -1246,16 +1241,6 @@ npm run dev
 * **נהג:** הזיני `driverid` קיים (למשל `1001`, `1131`)
 * **מנהל:** לחצי «כניסת מנהל»
 
-### פתרון בעיות נפוצות
-
-| בעיה | פתרון |
-|------|--------|
-| `database: disconnected` | ודאי ש-Docker רץ ו-`.env` נכון |
-| שגיאת Node ישנה | שדרגי ל-Node 18+ |
-| פורט 3001 תפוס | עצרי תהליך ישן: `netstat -ano \| findstr :3001` ואז `taskkill /PID <מספר> /F` |
-| אובייקטי שלב ד' חסרים | הפעילי מחדש את `npm run dev:server` |
-
----
 
 ## מבנה הפרויקט
 

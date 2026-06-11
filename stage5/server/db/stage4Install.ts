@@ -1,6 +1,7 @@
 import { query } from './pool.js';
 
 export async function installStage4Objects() {
+  await query(`DROP FUNCTION IF EXISTS get_driver_top_region_activity(integer)`);
   await query(`
     CREATE OR REPLACE FUNCTION get_driver_top_region_activity(p_driver_id INT)
     RETURNS TABLE (

@@ -1,6 +1,5 @@
 ---------------------------------------
 --select queries --
--- מותאם לבסיס משולב: vehicle (במקום bus), route, trip, driver, route_stop
 ---------------------------------------
 /* screen-7.png */
 -- שליפת כמות הנסיעות של כל נהג עבור מסך שבע סיכום נסיעות
@@ -223,3 +222,11 @@ WHERE trip_id IN (
         HAVING COUNT(DISTINCT t2.trip_id) > 2
     )
 );
+
+DELETE FROM driver d
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM trip t
+    WHERE t.driver_id = d.driverid
+);
+

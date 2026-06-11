@@ -1,78 +1,15 @@
-# שלב ה — הרצה
+# הרצה מהירה
 
-## מבנה
-
-```
-stage5/
-  server/          ← Backend (Express + PostgreSQL)
-    config.ts
-    db/pool.ts
-    routes/
-    index.ts
-  src/
-    api/           ← קריאות API מהפרונט
-    App.tsx        ← UI
-```
-
-## דרישות
-
-- Node.js **18+**
-- Docker + PostgreSQL (`DB_NAME_SECRET=stage3` ב-`.env` בשורש הפרויקט)
-
-## התקנה
-
-```bash
-cd stage5
-npm install
-```
-
-## הרצה (2 טרמינלים)
-
-**טרמינל 1 — API + DB:**
-
-```bash
-docker compose up -d
-cd stage5
-npm run dev:server
-```
-
-בדיקה: http://localhost:3001/api/health  
-צריך: `{"status":"ok","database":"connected"}`
-
-**טרמינל 2 — פרונט:**
-
-```bash
-cd stage5
-npm run dev
-```
-
-פתחי: http://localhost:3000
-
-## כניסת נהג (מחובר ל-DB)
-
-הזיני `driverid` אמיתי מהטבלה `driver` (למשל `1001`, `1131`).
-
-## API
-
-| Method | Path | תיאור |
-|--------|------|--------|
-| GET | `/api/health` | בדיקת חיבור DB |
-| GET | `/api/drivers` | רשימת נהגים |
-| GET | `/api/drivers/:id` | שליפת נהג לפי מזהה |
-| GET | `/api/buses` | רשימת אוטובוסים (לשיבוץ) |
-| GET | `/api/routes` | רשימת מסלולים (לשיבוץ) |
-| GET | `/api/trips` | רשימת נסיעות |
-| POST | `/api/trips` | שיבוץ נסיעה |
-
-## אם מופיע `Cannot GET /api/buses`
-
-השרver הישן עדיין רץ. עצרי אותו והפעילי מחדש:
+הוראות מפורטות לכניסה והפעלה: **[הוראות-הפעלה.md](./הוראות-הפעלה.md)**
 
 ```powershell
-netstat -ano | findstr :3001
-taskkill /PID <מספר_התהליך> /F
+# משורש הפרויקט
+docker compose up -d
+
 cd stage5
-npm run dev:server
+npm install
+npm run dev:server   # טרמינל 1
+npm run dev          # טרמינל 2
 ```
 
-בדיקה: http://localhost:3001/api/buses — צריך JSON, לא HTML.
+http://localhost:3000
