@@ -42,7 +42,6 @@ vehiclesRouter.get('/', async (_req, res) => {
 
 vehiclesRouter.post('/', async (req, res) => {
   const {
-    id,
     licensePlate,
     capacity,
     manufacturer,
@@ -51,13 +50,11 @@ vehiclesRouter.post('/', async (req, res) => {
     vehicleType,
   } = req.body ?? {};
 
-  const busid = Number.parseInt(String(id), 10);
   const licenseplate = Number.parseInt(String(licensePlate), 10);
   const cap = Number.parseInt(String(capacity), 10);
   const yr = Number.parseInt(String(year), 10);
 
   if (
-    Number.isNaN(busid) ||
     Number.isNaN(licenseplate) ||
     Number.isNaN(cap) ||
     cap < 1 ||
@@ -71,13 +68,15 @@ vehiclesRouter.post('/', async (req, res) => {
   }
 
   try {
-    const exists = await query('SELECT 1 FROM vehicle WHERE busid = $1 OR licenseplate = $2', [
-      busid,
-      licenseplate,
-    ]);
+    const exists = await query('SELECT 1 FROM vehicle WHERE licenseplate = $1', [licenseplate]);
     if (exists.rowCount) {
-      return res.status(400).json({ error: 'מזהה או מספר רישוי כבר קיים' });
+      return res.status(400).json({ error: 'מספר רישוי כבר קיים' });
     }
+
+    const idResult = await query<{ id: number }>(
+      'SELECT COALESCE(MAX(busid), 0) + 1 AS id FROM vehicle',
+    );
+    const busid = idResult.rows[0].id;
 
     await query(
       `INSERT INTO vehicle (busid, licenseplate, capacity, manufacturer, model, year, vehicle_type)

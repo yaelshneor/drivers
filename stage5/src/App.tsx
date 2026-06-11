@@ -812,7 +812,6 @@ function ManagerDashboard({
                 <table className="w-full text-right">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="px-6 py-4 font-semibold text-slate-600">מזהה</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">מספר רישוי</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">יצרן / דגם</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">שנה</th>
@@ -823,12 +822,11 @@ function ManagerDashboard({
                   <tbody className="divide-y divide-slate-100">
                     {vehicles.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500">אין כלי תחבורה — הוסיפי כלי חדש</td>
+                        <td colSpan={5} className="px-6 py-12 text-center text-slate-500">אין כלי תחבורה — הוסיפי כלי חדש</td>
                       </tr>
                     ) : vehicles.map((v) => (
                       <tr key={v.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 font-medium">{v.id}</td>
-                        <td className="px-6 py-4 text-slate-500">{v.licensePlate}</td>
+                        <td className="px-6 py-4 font-medium">{v.licensePlate}</td>
                         <td className="px-6 py-4 text-slate-500">{v.manufacturer} {v.model}</td>
                         <td className="px-6 py-4 text-slate-500">{v.year}</td>
                         <td className="px-6 py-4 text-slate-500">{v.capacity}</td>
@@ -1391,7 +1389,6 @@ const VEHICLE_TYPES = ['אוטובוס עירוני', 'אוטובוס תיירו
 
 function VehicleFormModal({ onClose, onSave }: { onClose: () => void, onSave: (data: VehicleCreateInput) => void }) {
   const [form, setForm] = useState<VehicleCreateInput>({
-    id: '',
     licensePlate: '',
     capacity: 30,
     manufacturer: '',
@@ -1401,7 +1398,6 @@ function VehicleFormModal({ onClose, onSave }: { onClose: () => void, onSave: (d
   });
 
   const canSubmit =
-    form.id &&
     form.licensePlate &&
     form.manufacturer &&
     form.model &&
@@ -1421,25 +1417,14 @@ function VehicleFormModal({ onClose, onSave }: { onClose: () => void, onSave: (d
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X /></button>
         </div>
         <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">מזהה</label>
-              <input
-                type="text"
-                value={form.id}
-                onChange={(e) => setForm({ ...form, id: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">מספר רישוי</label>
-              <input
-                type="text"
-                value={form.licensePlate}
-                onChange={(e) => setForm({ ...form, licensePlate: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">מספר רישוי</label>
+            <input
+              type="text"
+              value={form.licensePlate}
+              onChange={(e) => setForm({ ...form, licensePlate: e.target.value })}
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
