@@ -28,7 +28,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Driver, Trip, TripAssignment, BusOption, RouteOption, RouteCreateInput, RegionOption, SiteOption, StopOption } from './types';
+import { Driver, Trip, TripAssignment, BusOption, RouteOption, RouteCreateInput, VehicleCreateInput, RegionOption, SiteOption, StopOption } from './types';
 import {
   fetchDriverById,
   fetchDrivers,
@@ -37,14 +37,14 @@ import {
   deleteDriverApi,
 } from './api/drivers';
 import { LICENSE_TYPES } from './constants/licenseTypes';
-import { fetchBuses } from './api/buses';
+import { fetchBuses, createVehicle } from './api/buses';
 import { fetchRoutes, createRoute } from './api/routes';
 import { fetchRegions, fetchSites, fetchStops } from './api/catalog';
 import { fetchTrips, createTrip, updateTripStatus } from './api/trips';
 import { ApiError } from './api/client';
 
 type View = 'login' | 'driver' | 'manager';
-type ManagerTab = 'drivers' | 'routes' | 'schedule' | 'requests';
+type ManagerTab = 'drivers' | 'vehicles' | 'routes' | 'schedule' | 'requests';
 type DriverViewMode = 'list' | 'calendar' | 'stats';
 
 export default function App() {
@@ -53,6 +53,7 @@ export default function App() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [routes, setRoutes] = useState<RouteOption[]>([]);
+  const [vehicles, setVehicles] = useState<BusOption[]>([]);
   const [managerTab, setManagerTab] = useState<ManagerTab>('drivers');
   const [driverViewMode, setDriverViewMode] = useState<DriverViewMode>('list');
   const [managerScheduleMode, setManagerScheduleMode] = useState<DriverViewMode>('list');
@@ -62,6 +63,7 @@ export default function App() {
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [isAssignmentFormOpen, setIsAssignmentFormOpen] = useState(false);
   const [isRouteFormOpen, setIsRouteFormOpen] = useState(false);
+  const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false);
   const [selectedTripDetails, setSelectedTripDetails] = useState<Trip | null>(null);
   const [selectedDriverDetails, setSelectedDriverDetails] = useState<Driver | null>(null);
 
@@ -95,14 +97,16 @@ export default function App() {
 
   const handleManagerLogin = async () => {
     try {
-      const [driversData, tripsData, routesData] = await Promise.all([
+      const [driversData, tripsData, routesData, vehiclesData] = await Promise.all([
         fetchDrivers(),
         fetchTrips(),
         fetchRoutes(),
+        fetchBuses(),
       ]);
       setDrivers(driversData);
       setTrips(tripsData);
       setRoutes(routesData);
+      setVehicles(vehiclesData);
       setView('manager');
     } catch {
       alert('שגיאה בחיבור לשרת — ודאי שה-API וה-DB פעילים');
@@ -115,6 +119,7 @@ export default function App() {
     setTrips([]);
     setDrivers([]);
     setRoutes([]);
+    setVehicles([]);
   };
 
   const addDriver = async (driver: Driver) => {
@@ -166,6 +171,16 @@ export default function App() {
       setIsRouteFormOpen(false);
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'שגיאה ביצירת מסלול');
+    }
+  };
+
+  const addVehicle = async (data: VehicleCreateInput) => {
+    try {
+      const created = await createVehicle(data);
+      setVehicles((prev) => [...prev, created]);
+      setIsVehicleFormOpen(false);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'שגיאה בהוספת כלי תחבורה');
     }
   };
 
@@ -224,12 +239,14 @@ export default function App() {
             drivers={drivers}
             trips={trips}
             routes={routes}
+            vehicles={vehicles}
             activeTab={managerTab}
             setActiveTab={setManagerTab}
             onLogout={handleLogout}
             onAddDriver={() => { setEditingDriver(null); setIsDriverFormOpen(true); }}
             onEditDriver={(d) => { setEditingDriver(d); setIsDriverFormOpen(true); }}
             onDeleteDriver={deleteDriver}
+            onAddVehicle={() => setIsVehicleFormOpen(true)}
             onAddRoute={() => setIsRouteFormOpen(true)}
             onAssignTrip={() => setIsAssignmentFormOpen(true)}
             onCancellationResponse={handleCancellationResponse}
@@ -262,6 +279,13 @@ export default function App() {
         <RouteFormModal
           onClose={() => setIsRouteFormOpen(false)}
           onSave={addRoute}
+        />
+      )}
+
+      {isVehicleFormOpen && (
+        <VehicleFormModal
+          onClose={() => setIsVehicleFormOpen(false)}
+          onSave={addVehicle}
         />
       )}
 
@@ -631,12 +655,14 @@ function ManagerDashboard({
   drivers, 
   trips,
   routes,
+  vehicles,
   activeTab, 
   setActiveTab, 
   onLogout,
   onAddDriver,
   onEditDriver,
   onDeleteDriver,
+  onAddVehicle,
   onAddRoute,
   onAssignTrip,
   onCancellationResponse,
@@ -648,12 +674,14 @@ function ManagerDashboard({
   drivers: Driver[], 
   trips: Trip[],
   routes: RouteOption[],
+  vehicles: BusOption[],
   activeTab: ManagerTab,
   setActiveTab: (tab: ManagerTab) => void,
   onLogout: () => void,
   onAddDriver: () => void,
   onEditDriver: (d: Driver) => void,
   onDeleteDriver: (id: string) => void,
+  onAddVehicle: () => void,
   onAddRoute: () => void,
   onAssignTrip: () => void,
   onCancellationResponse: (id: string, approve: boolean) => void,
@@ -663,6 +691,7 @@ function ManagerDashboard({
   onSelectDriver: (driver: Driver) => void
 }) {
   const pendingRequests = trips.filter(t => t.status === 'pending_cancellation');
+  const [selectedRouteStops, setSelectedRouteStops] = useState<RouteOption | null>(null);
 
   return (
     <motion.div 
@@ -678,6 +707,7 @@ function ManagerDashboard({
           </div>
           <div className="hidden md:flex gap-1">
             <TabButton active={activeTab === 'drivers'} onClick={() => setActiveTab('drivers')} icon={<Users size={18} />} label="נהגים" />
+            <TabButton active={activeTab === 'vehicles'} onClick={() => setActiveTab('vehicles')} icon={<Bus size={18} />} label="כלים" />
             <TabButton active={activeTab === 'routes'} onClick={() => setActiveTab('routes')} icon={<MapPin size={18} />} label="מסלולים" />
             <TabButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar size={18} />} label="לוח נסיעות" />
             <TabButton 
@@ -696,9 +726,10 @@ function ManagerDashboard({
       </nav>
 
       {/* Mobile Tabs */}
-      <div className="md:hidden flex border-b border-slate-200 bg-white">
-        <TabButton active={activeTab === 'drivers'} onClick={() => setActiveTab('drivers')} icon={<Users size={18} />} label="נהגים" className="flex-1" />
-        <TabButton active={activeTab === 'routes'} onClick={() => setActiveTab('routes')} icon={<MapPin size={18} />} label="מסלולים" className="flex-1" />
+      <div className="md:hidden flex border-b border-slate-200 bg-white overflow-x-auto">
+        <TabButton active={activeTab === 'drivers'} onClick={() => setActiveTab('drivers')} icon={<Users size={18} />} label="נהגים" className="flex-1 min-w-fit" />
+        <TabButton active={activeTab === 'vehicles'} onClick={() => setActiveTab('vehicles')} icon={<Bus size={18} />} label="כלים" className="flex-1 min-w-fit" />
+        <TabButton active={activeTab === 'routes'} onClick={() => setActiveTab('routes')} icon={<MapPin size={18} />} label="מסלולים" className="flex-1 min-w-fit" />
         <TabButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar size={18} />} label="לוז" className="flex-1" />
         <TabButton active={activeTab === 'requests'} onClick={() => setActiveTab('requests')} icon={<AlertCircle size={18} />} label="בקשות" className="flex-1" badge={pendingRequests.length > 0 ? pendingRequests.length : undefined} />
       </div>
@@ -765,6 +796,51 @@ function ManagerDashboard({
             </section>
           )}
 
+          {activeTab === 'vehicles' && (
+            <section>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">ניהול כלי תחבורה</h2>
+                <button
+                  onClick={onAddVehicle}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-md"
+                >
+                  <Plus size={20} />
+                  הוספת כלי
+                </button>
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table className="w-full text-right">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold text-slate-600">מזהה</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">מספר רישוי</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">יצרן / דגם</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">שנה</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">קיבולת</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">סוג</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {vehicles.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500">אין כלי תחבורה — הוסיפי כלי חדש</td>
+                      </tr>
+                    ) : vehicles.map((v) => (
+                      <tr key={v.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-medium">{v.id}</td>
+                        <td className="px-6 py-4 text-slate-500">{v.licensePlate}</td>
+                        <td className="px-6 py-4 text-slate-500">{v.manufacturer} {v.model}</td>
+                        <td className="px-6 py-4 text-slate-500">{v.year}</td>
+                        <td className="px-6 py-4 text-slate-500">{v.capacity}</td>
+                        <td className="px-6 py-4 text-slate-500">{v.vehicleType || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
           {activeTab === 'routes' && (
             <section>
               <div className="flex justify-between items-center mb-6">
@@ -787,12 +863,13 @@ function ManagerDashboard({
                       <th className="px-6 py-4 font-semibold text-slate-600">משך</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">מרחק</th>
                       <th className="px-6 py-4 font-semibold text-slate-600">תחנות</th>
+                      <th className="px-6 py-4 font-semibold text-slate-600">פעולות</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {routes.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500">אין מסלולים — צרי מסלול חדש</td>
+                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500">אין מסלולים — צרי מסלול חדש</td>
                       </tr>
                     ) : routes.map((route) => (
                       <tr key={route.id} className="hover:bg-slate-50 transition-colors">
@@ -802,6 +879,15 @@ function ManagerDashboard({
                         <td className="px-6 py-4 text-slate-500">{route.durationMinutes} דק&apos;</td>
                         <td className="px-6 py-4 text-slate-500">{route.distanceKm} ק&quot;מ</td>
                         <td className="px-6 py-4 text-slate-500">{route.stops.length}</td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => setSelectedRouteStops(route)}
+                            className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all"
+                            title="צפייה בתחנות"
+                          >
+                            <Eye size={18} />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -904,7 +990,70 @@ function ManagerDashboard({
           )}
         </div>
       </main>
+
+      {selectedRouteStops && (
+        <RouteStopsModal
+          route={selectedRouteStops}
+          onClose={() => setSelectedRouteStops(null)}
+        />
+      )}
     </motion.div>
+  );
+}
+
+function RouteStopsModal({ route, onClose }: { route: RouteOption, onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <h3 className="text-xl font-bold">תחנות במסלול: {route.name}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X /></button>
+        </div>
+        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase">יציאה</span>
+              <p className="font-medium">{route.startLocation}</p>
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase">יעד</span>
+              <p className="font-medium">{route.endLocation}</p>
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase">אזור</span>
+              <p className="font-medium">{route.regionName}</p>
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase">משך / מרחק</span>
+              <p className="font-medium">{route.durationMinutes} דק&apos; · {route.distanceKm} ק&quot;מ</p>
+            </div>
+          </div>
+          {route.stops.length === 0 ? (
+            <p className="text-center text-slate-500 py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">אין תחנות במסלול זה</p>
+          ) : (
+            <ol className="space-y-2">
+              {route.stops.map((stop, i) => (
+                <li key={i} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl">
+                  <span className="w-7 h-7 flex items-center justify-center bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full shrink-0">
+                    {i + 1}
+                  </span>
+                  <span className="font-medium text-slate-700">{stop}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+          <button onClick={onClose} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-bold">
+            סגור
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
@@ -1231,6 +1380,131 @@ function DriverFormModal({ driver, onClose, onSave }: { driver: Driver | null, o
             className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-100"
           >
             שמור נהג
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+const VEHICLE_TYPES = ['אוטובוס עירוני', 'אוטובוס תיירותי', 'מיניבוס', 'אוטובוס בינעירוני'];
+
+function VehicleFormModal({ onClose, onSave }: { onClose: () => void, onSave: (data: VehicleCreateInput) => void }) {
+  const [form, setForm] = useState<VehicleCreateInput>({
+    id: '',
+    licensePlate: '',
+    capacity: 30,
+    manufacturer: '',
+    model: '',
+    year: new Date().getFullYear(),
+    vehicleType: '',
+  });
+
+  const canSubmit =
+    form.id &&
+    form.licensePlate &&
+    form.manufacturer &&
+    form.model &&
+    form.year >= 1990 &&
+    form.capacity >= 1 &&
+    form.vehicleType;
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <h3 className="text-xl font-bold">הוספת כלי תחבורה</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">מזהה</label>
+              <input
+                type="text"
+                value={form.id}
+                onChange={(e) => setForm({ ...form, id: e.target.value })}
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">מספר רישוי</label>
+              <input
+                type="text"
+                value={form.licensePlate}
+                onChange={(e) => setForm({ ...form, licensePlate: e.target.value })}
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">יצרן</label>
+              <input
+                type="text"
+                value={form.manufacturer}
+                onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">דגם</label>
+              <input
+                type="text"
+                value={form.model}
+                onChange={(e) => setForm({ ...form, model: e.target.value })}
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">שנת ייצור</label>
+              <input
+                type="number"
+                value={form.year}
+                onChange={(e) => setForm({ ...form, year: Number(e.target.value) })}
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">קיבולת</label>
+              <input
+                type="number"
+                min={1}
+                max={200}
+                value={form.capacity}
+                onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })}
+                className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">סוג רכב</label>
+            <select
+              value={form.vehicleType}
+              onChange={(e) => setForm({ ...form, vehicleType: e.target.value })}
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">בחר סוג...</option>
+              {VEHICLE_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-slate-600 font-medium">ביטול</button>
+          <button
+            onClick={() => canSubmit && onSave(form)}
+            disabled={!canSubmit}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-100"
+          >
+            שמור כלי
           </button>
         </div>
       </motion.div>

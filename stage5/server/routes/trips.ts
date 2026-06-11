@@ -46,11 +46,11 @@ tripsRouter.post('/', async (req, res) => {
       return res.status(400).json({ error: 'נהג לא נמצא' });
     }
 
-    const busResult = await query<{ capacity: number }>(
-      'SELECT capacity FROM bus WHERE busid = $1',
+    const vehicleResult = await query<{ capacity: number; licenseplate: number }>(
+      'SELECT capacity, licenseplate FROM vehicle WHERE busid = $1',
       [bus_id],
     );
-    if (!busResult.rowCount) {
+    if (!vehicleResult.rowCount) {
       return res.status(400).json({ error: 'אוטובוס לא נמצא' });
     }
 
@@ -59,17 +59,14 @@ tripsRouter.post('/', async (req, res) => {
       return res.status(400).json({ error: 'מסלול לא נמצא' });
     }
 
-    const plateResult = await query<{ plate_number: string }>(
-      `SELECT plate_number FROM vehicle ORDER BY plate_number LIMIT 1`,
-    );
-    const plate_number = plateResult.rows[0]?.plate_number ?? null;
+    const plate_number = String(vehicleResult.rows[0].licenseplate);
 
     const idResult = await query<{ next_id: number }>(
       'SELECT COALESCE(MAX(trip_id), 0) + 1 AS next_id FROM trip',
     );
     const trip_id = idResult.rows[0].next_id;
     const departure_time = parseDepartureTime(time);
-    const available_seats = busResult.rows[0].capacity;
+    const available_seats = vehicleResult.rows[0].capacity;
 
     await query(
       `INSERT INTO trip (trip_id, trip_date, departure_time, available_seats,

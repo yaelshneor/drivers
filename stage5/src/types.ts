@@ -25,6 +25,17 @@ export interface BusOption {
   manufacturer: string;
   model: string;
   year: number;
+  vehicleType?: string;
+}
+
+export interface VehicleCreateInput {
+  id: string;
+  licensePlate: string;
+  capacity: number;
+  manufacturer: string;
+  model: string;
+  year: number;
+  vehicleType: string;
 }
 
 export interface RouteOption {
