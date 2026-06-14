@@ -1,21 +1,23 @@
 # שלב ה — אפליקציית Web
 
-**[הוראות כניסה והפעלה](./הוראות-הפעלה.md)** · [דוח מלא](../README.md#שלב-ה--אפליקציית-web) · [תמונות](./screenshots/)
+**[הרצה עם Docker](../DOCKER.md)** · [הוראות מפורטות](./הוראות-הפעלה.md)
 
-## הרצה מהירה
+## הרצה מהירה (Docker)
 
 ```powershell
-# משורש הפרויקט
-docker compose up -d
-
-cd stage5
-npm install
-npm run dev:server   # טרמינל 1 — :3001
-npm run dev          # טרמינל 2 — :3000
+# משורש drivers/
+copy .env.example .env
+docker compose up --build
 ```
 
-פתחי: http://localhost:3000
+http://localhost:3000
 
-## תמונות מסך
+## הרצה מקומית (פיתוח)
 
-[צילומי המסכים](./screenshots/) · [דוח מלא עם תמונות](../README.md#תמונות-מסך)
+```powershell
+docker compose up -d db pgadmin
+cd stage5
+npm install
+npm run dev:server   # טרמינל 1
+npm run dev          # טרמינל 2
+```

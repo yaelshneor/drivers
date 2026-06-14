@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { query } from '../db/pool.js';
 
 const VEHICLE_SELECT = `
-  SELECT busid, licenseplate, capacity, manufacturer, model, year, vehicle_type
-  FROM vehicle
+  SELECT busid, licenseplate, capacity, manufacturer, model, year,
+         NULL::varchar AS vehicle_type
+  FROM bus
 `;
 
 type VehicleRow = {
@@ -68,19 +69,19 @@ vehiclesRouter.post('/', async (req, res) => {
   }
 
   try {
-    const exists = await query('SELECT 1 FROM vehicle WHERE licenseplate = $1', [licenseplate]);
+    const exists = await query('SELECT 1 FROM bus WHERE licenseplate = $1', [licenseplate]);
     if (exists.rowCount) {
       return res.status(400).json({ error: 'מספר רישוי כבר קיים' });
     }
 
     const idResult = await query<{ id: number }>(
-      'SELECT COALESCE(MAX(busid), 0) + 1 AS id FROM vehicle',
+      'SELECT COALESCE(MAX(busid), 0) + 1 AS id FROM bus',
     );
     const busid = idResult.rows[0].id;
 
     await query(
-      `INSERT INTO vehicle (busid, licenseplate, capacity, manufacturer, model, year, vehicle_type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      `INSERT INTO bus (busid, licenseplate, capacity, manufacturer, model, year)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
       [
         busid,
         licenseplate,
@@ -88,7 +89,6 @@ vehiclesRouter.post('/', async (req, res) => {
         manufacturer.trim(),
         model.trim(),
         yr,
-        vehicleType.trim(),
       ],
     );
 

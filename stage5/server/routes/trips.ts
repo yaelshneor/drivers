@@ -42,7 +42,7 @@ tripsRouter.post('/', async (req, res) => {
 
   try {
     const vehicleResult = await query<{ capacity: number; licenseplate: number }>(
-      'SELECT capacity, licenseplate FROM vehicle WHERE busid = $1',
+      'SELECT capacity, licenseplate FROM bus WHERE busid = $1',
       [bus_id],
     );
     if (!vehicleResult.rowCount) {

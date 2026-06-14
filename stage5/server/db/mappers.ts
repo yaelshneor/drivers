@@ -93,7 +93,7 @@ export function mapTripRow(row: TripRow) {
 const TRIP_SELECT = `
   SELECT t.trip_id, t.driver_id, t.trip_date, t.departure_time, t.status,
          r.route_name, r.start_location, r.end_location,
-         v.licenseplate,
+         b.licenseplate,
          (
            SELECT COALESCE(array_agg(s.stop_name ORDER BY rs.stop_order), ARRAY[]::varchar[])
            FROM route_stop rs
@@ -102,7 +102,7 @@ const TRIP_SELECT = `
          ) AS stops
   FROM trip t
   JOIN route r ON r.route_id = t.route_id
-  JOIN vehicle v ON v.busid = t.bus_id
+  JOIN bus b ON b.busid = t.bus_id
 `;
 
 export async function fetchTrips(driverId?: number) {

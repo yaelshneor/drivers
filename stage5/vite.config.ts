@@ -17,7 +17,7 @@ export default defineConfig(({mode}) => {
     },
     server: {
       proxy: {
-        '/api': 'http://localhost:3001',
+        '/api': process.env.API_PROXY_TARGET ?? 'http://localhost:3001',
       },
       hmr: process.env.DISABLE_HMR !== 'true',
     },

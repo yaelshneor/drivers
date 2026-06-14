@@ -1186,55 +1186,45 @@ PostgreSQL (Docker :5432)
 
 ## הוראות הפעלה
 
-> קובץ הוראות מפורט בתיקיית stage5: [`stage5/הוראות-הפעלה.md`](./stage5/הוראות-הפעלה.md)
+> **הרצה מלאה ב-Docker (מומלץ):** [`DOCKER.md`](./DOCKER.md)  
+> **הרצה מקומית לפיתוח:** [`stage5/הוראות-הפעלה.md`](./stage5/הוראות-הפעלה.md)
 
 ### דרישות
 
-* **Node.js 18+** (בדיקה: `node -v`)
-* **Docker Desktop** (PostgreSQL + pgAdmin)
-* קובץ `.env` בשורש הפרויקט (ליד `docker-compose.yml`):
+* **Docker Desktop** — להרצה מלאה (אפליקציה + DB)
+* **Node.js 18+** — רק להרצה מקומית לפיתוח (`node -v`)
+* קובץ `.env` בשורש הפרויקט — העתיקי מ-`.env.example`:
 
+```powershell
+copy .env.example .env
+```
 
-> `DB_NAME_SECRET` חייב להתאים לבסיס הנתונים המשוחזר/המשולב (למשל `try`, `stage3`).
-
-### שלב 1 — הרמת בסיס הנתונים
+### הרצה מהירה (Docker)
 
 משורש הפרויקט (`drivers/`):
 
 ```powershell
-docker compose up -d
+docker compose up --build
 ```
 
-* PostgreSQL: `localhost:5432`
+* אפליקציה: http://localhost:3000
+* API health: http://localhost:3001/api/health
 * pgAdmin: http://localhost:8080
 
-### שלב 2 — התקנת תלויות
+**כניסה:** מזהה נהג `1001` / `1131`, או «כניסת מנהל».
+
+### הרצה מקומית (לפיתוח)
 
 ```powershell
+docker compose up -d
 cd stage5
 npm install
+npm run dev:server   # טרמינל 1
+npm run dev          # טרמינל 2
 ```
 
-### שלב 3 — הרצה (שני טרמינלים)
+> אם מותקן PostgreSQL מקומי — הוסיפי `DB_PORT=5433` ל-`.env` (ראי פתרון בעיות ב-`stage5/הוראות-הפעלה.md`).
 
-**טרמינל 1 — שרת API:**
-
-```powershell
-cd stage5
-npm run dev:server
-```
-
-בדיקה: http://localhost:3001/api/health  
-תשובה צפויה: `{"status":"ok","database":"connected"}`
-
-**טרמינל 2 — פרונט:**
-
-```powershell
-cd stage5
-npm run dev
-```
-
-פתיחת האפליקציה: http://localhost:3000
 
 ### כניסה למערכת
 
@@ -1362,3 +1352,98 @@ stage5/
 * שילוב **פונקציה, פרוצדורה וטריגר משלב ד'** במסכים
 * ניהול נהגים, כלי רכב, מסלולים, נסיעות ובקשות ביטול
 * תיעוד הרצה ו-API בדוח זה
+
+---
+
+## הרצת הפרויקט (הגשה)
+
+> **אפשרות 2 — Docker בלבד.** אין צורך בהתקנת Node.js או PostgreSQL על המחשב.
+
+### דרישות
+
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows / Mac / Linux)
+
+### שלב 1 — הכנת קובץ סביבה
+
+משורש הפרויקט (`drivers/`):
+
+**Windows (PowerShell / CMD):**
+```powershell
+copy .env.example .env
+```
+
+**Mac / Linux:**
+```bash
+cp .env.example .env
+```
+
+אם `.env` כבר קיים — אין צורך לדרוס. ערכי ברירת המחדל ב-`.env.example` מספיקים.
+
+### שלב 2 — הרצה
+
+```powershell
+docker compose up --build
+```
+
+בהרצה ראשונה המערכת בונה images, מרימה PostgreSQL 17, משחזרת את הגיבוי `stage4/backup4`, ומפעילה API + ממשק Web. **המתיני 1–2 דקות** עד שהכל עולה.
+
+### שלב 3 — פתיחה ובדיקה
+
+| מה לבדוק | כתובת | תוצאה צפויה |
+|-----------|--------|-------------|
+| אפליקציה | http://localhost:3000 | מסך כניסה |
+| API | http://localhost:3001/api/health | `{"status":"ok","database":"connected"}` |
+| pgAdmin (אופציונלי) | http://localhost:8080 | התחברות לפי `PGADMIN_EMAIL` / `PGADMIN_PASSWORD` ב-`.env` |
+
+### שלב 4 — כניסה למערכת
+
+* **נהג:** הזיני מזהה קיים — למשל `1001` או `1131` → «כניסת נהג»
+* **מנהל:** «כניסת מנהל» (ללא הזנת מזהה)
+
+### עצירה
+
+```powershell
+docker compose down
+```
+
+התחלה מחדש עם DB נקי (מוחק נתונים):
+
+```powershell
+docker compose down -v
+docker compose up --build
+```
+
+### מה עולה ב-Docker
+
+| שירות | תפקיד | פורט |
+|--------|--------|------|
+| `db` | PostgreSQL 17 + שחזור `stage4/backup4` | פנימי |
+| `api` | שרת Express (`stage5/server`) | 3001 |
+| `web` | ממשק React (`stage5`) | 3000 |
+| `pgadmin` | ניהול DB | 8080 |
+
+### פתרון בעיות נפוצות
+
+| בעיה | פתרון |
+|------|--------|
+| פורט 3000 / 3001 תפוס | `docker compose down` — ודאי שאין `npm run dev` מקומי |
+| `database: disconnected` | המתיני ~30 שניות; `docker compose logs db` |
+| DB ריק / שגיאת restore | `docker compose down -v` ואז `docker compose up --build` |
+| שגיאת overwrite ב-`.env` | ענו `N` — `.env` קיים מספיק |
+
+### הרצה מקומית לפיתוח (לא נדרש להגשה)
+
+Docker מרים רק DB, והאפליקציה רצה עם Node.js:
+
+```powershell
+docker compose up -d db pgadmin
+cd stage5
+npm install
+npm run dev:server   # טרמינל 1 — :3001
+npm run dev          # טרמינל 2 — :3000
+```
+
+אם מותקן PostgreSQL מקומי על פורט 5432 — הוסיפי `DB_PORT=5433` ל-`.env`.
+
+פרטים נוספים: [DOCKER.md](./DOCKER.md) · [stage5/הוראות-הפעלה.md](./stage5/הוראות-הפעלה.md)
+

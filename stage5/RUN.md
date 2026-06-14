@@ -1,15 +1,11 @@
-# הרצה מהירה
+# הרצה
 
-הוראות מפורטות לכניסה והפעלה: **[הוראות-הפעלה.md](./הוראות-הפעלה.md)**
+**Docker (מומלץ):** [../DOCKER.md](../DOCKER.md)
 
 ```powershell
-# משורש הפרויקט
-docker compose up -d
-
-cd stage5
-npm install
-npm run dev:server   # טרמינל 1
-npm run dev          # טרמינל 2
+copy ..\.env.example ..\.env
+cd ..
+docker compose up --build
 ```
 
 http://localhost:3000
