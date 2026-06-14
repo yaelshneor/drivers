@@ -152,6 +152,10 @@ driversRouter.post('/', async (req, res) => {
     return res.status(201).json({ ...mapDriverRow(result.rows[0]), totalTrips: 0 });
   } catch (err) {
     console.error('POST /api/drivers', err);
+    const pgCode = err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
+    if (pgCode === '23505') {
+      return res.status(409).json({ error: 'האיידי הזה כבר קיים במערכת' });
+    }
     return res.status(500).json({ error: 'שגיאת שרת' });
   }
 });
