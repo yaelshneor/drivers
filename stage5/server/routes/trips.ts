@@ -89,7 +89,7 @@ tripsRouter.post('/', async (req, res) => {
     console.error('POST /api/trips', err);
     const pgMsg = err instanceof Error ? err.message : '';
     if (pgMsg.includes('does not exist')) {
-      return res.status(400).json({ error: 'נהג לא קיים — טריגר trg_validate_driver חסם את השיבוץ' });
+      return res.status(400).json({ error: 'נהג לא קיים — לא ניתן לבצע שיבוץ' });
     }
     return res.status(500).json({ error: 'שגיאת שרת' });
   }

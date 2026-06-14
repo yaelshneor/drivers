@@ -162,7 +162,7 @@ export default function App() {
       setDrivers(allDrivers);
       setIsAssignmentFormOpen(false);
       setManagerTab('schedule');
-      setAssignNotice('שיבוץ הצליח — טריגר trg_validate_driver אימת את הנהג והנסיעה נוספה ללוח');
+      setAssignNotice('שיבוץ הצליח — הנסיעה נוספה ללוח');
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'שגיאה בשיבוץ נסיעה');
     }
@@ -1641,7 +1641,7 @@ function DriverDetailsModal({ driver, trips, onClose }: { driver: Driver, trips:
           <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
             <h4 className="font-bold mb-3 flex items-center gap-2 text-indigo-900">
               <TrendingUp size={18} />
-              ניתוח אזור פעילות (get_driver_top_region_activity)
+              ניתוח אזור פעילות
             </h4>
             {activityError ? (
               <p className="text-sm text-red-600">{activityError}</p>
@@ -2051,7 +2051,7 @@ function AssignmentFormModal({ drivers, onClose, onSave }: { drivers: Driver[], 
               </div>
 
               <p className="text-xs text-slate-500 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                בעת שמירה, טריגר <strong>trg_validate_driver</strong> יאמת ב-DB שהנהג קיים לפני הוספת הנסיעה.
+                לפני שמירה, המערכת תוודא שהנהג קיים במערכת.
               </p>
             </>
           )}

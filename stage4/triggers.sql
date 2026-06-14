@@ -7,12 +7,26 @@ CREATE OR REPLACE FUNCTION trip_update_audit()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    v_driver_name TEXT;
+    v_old_route TEXT;
+    v_new_route TEXT;
 BEGIN
+    SELECT fullname INTO v_driver_name FROM driver WHERE driverid = NEW.driver_id;
 
-    RAISE NOTICE 'Trip updated: ID %, Old Route %, New Route %',
-        OLD.trip_id,
-        OLD.route_id,
-        NEW.route_id;
+    SELECT route_name || ' (' || start_location || ' -> ' || end_location || ')'
+    INTO v_old_route FROM route WHERE route_id = OLD.route_id;
+
+    SELECT route_name || ' (' || start_location || ' -> ' || end_location || ')'
+    INTO v_new_route FROM route WHERE route_id = NEW.route_id;
+
+    RAISE NOTICE 'Trip updated: driver %, date %, departure %, plate %, route: % -> %',
+        v_driver_name,
+        NEW.trip_date,
+        NEW.departure_time,
+        NEW.plate_number,
+        v_old_route,
+        v_new_route;
 
     RETURN NEW;
 END;
