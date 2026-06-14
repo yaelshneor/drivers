@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { query } from '../db/pool.js';
 import { isValidLicenseType } from '../constants/licenseTypes.js';
 import { mapDriverRow } from '../db/mappers.js';
+import { CONFLICT, duplicateErrorResponse } from '../db/conflictError.js';
 import { DRIVER_TRIP_SUMMARY_SQL, UPDATE_DRIVER_SQL } from '../queries/stage2Queries.js';
 
 const DRIVER_SELECT = `
@@ -140,6 +141,11 @@ driversRouter.post('/', async (req, res) => {
   }
 
   try {
+    const existing = await query('SELECT 1 FROM driver WHERE driverid = $1', [driverid]);
+    if (existing.rowCount) {
+      return res.status(409).json({ error: CONFLICT.driverId });
+    }
+
     await query(
       `INSERT INTO driver (driverid, fullname, phone, licensetype)
        VALUES ($1, $2, $3, $4)`,
@@ -152,10 +158,8 @@ driversRouter.post('/', async (req, res) => {
     return res.status(201).json({ ...mapDriverRow(result.rows[0]), totalTrips: 0 });
   } catch (err) {
     console.error('POST /api/drivers', err);
-    const pgCode = err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
-    if (pgCode === '23505') {
-      return res.status(409).json({ error: 'האיידי הזה כבר קיים במערכת' });
-    }
+    const dup = duplicateErrorResponse(err, CONFLICT.driverId);
+    if (dup) return res.status(dup.status).json({ error: dup.error });
     return res.status(500).json({ error: 'שגיאת שרת' });
   }
 });

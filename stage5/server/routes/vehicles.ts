@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db/pool.js';
+import { CONFLICT, duplicateErrorResponse } from '../db/conflictError.js';
 
 const VEHICLE_SELECT = `
   SELECT busid, licenseplate, capacity, manufacturer, model, year,
@@ -71,7 +72,7 @@ vehiclesRouter.post('/', async (req, res) => {
   try {
     const exists = await query('SELECT 1 FROM bus WHERE licenseplate = $1', [licenseplate]);
     if (exists.rowCount) {
-      return res.status(400).json({ error: 'מספר רישוי כבר קיים' });
+      return res.status(409).json({ error: CONFLICT.vehicleLicense });
     }
 
     const idResult = await query<{ id: number }>(
@@ -96,6 +97,8 @@ vehiclesRouter.post('/', async (req, res) => {
     return res.status(201).json(mapVehicleRow(result.rows[0]));
   } catch (err) {
     console.error('POST /api/vehicles', err);
+    const dup = duplicateErrorResponse(err, CONFLICT.vehicleLicense);
+    if (dup) return res.status(dup.status).json({ error: dup.error });
     return res.status(500).json({ error: 'שגיאת שרת' });
   }
 });

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool, query } from '../db/pool.js';
+import { CONFLICT, duplicateErrorResponse } from '../db/conflictError.js';
 
 const ROUTE_SELECT = `
   SELECT r.route_id, r.route_name, r.start_location, r.end_location,
@@ -196,6 +197,8 @@ routesRouter.post('/', async (req, res) => {
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('POST /api/routes', err);
+    const dup = duplicateErrorResponse(err, CONFLICT.route);
+    if (dup) return res.status(dup.status).json({ error: dup.error });
     return res.status(500).json({ error: 'שגיאה ביצירת מסלול' });
   } finally {
     client.release();

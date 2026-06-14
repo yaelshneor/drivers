@@ -6,6 +6,7 @@ import {
   toDbStatus,
   type TripStatus,
 } from '../db/mappers.js';
+import { CONFLICT, duplicateErrorResponse } from '../db/conflictError.js';
 
 export const tripsRouter = Router();
 
@@ -91,6 +92,8 @@ tripsRouter.post('/', async (req, res) => {
     if (pgMsg.includes('does not exist')) {
       return res.status(400).json({ error: 'נהג לא קיים — לא ניתן לבצע שיבוץ' });
     }
+    const dup = duplicateErrorResponse(err, CONFLICT.trip);
+    if (dup) return res.status(dup.status).json({ error: dup.error });
     return res.status(500).json({ error: 'שגיאת שרת' });
   }
 });
