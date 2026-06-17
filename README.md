@@ -1338,16 +1338,6 @@ copy .env.example .env
 cp .env.example .env
 ```
 
-אם `.env` כבר קיים — אין צורך לדרוס. ערכי ברירת המחדל ב-[`.env.example`](./.env.example) מספיקים:
-
-```env
-DB_USER_SECRET=yael
-DB_PASSWORD_SECRET=yael
-DB_NAME_SECRET=try
-PGADMIN_EMAIL=admin@example.com
-PGADMIN_PASSWORD=admin
-```
-
 ### שלב 2 — הרצה
 
 ```powershell
