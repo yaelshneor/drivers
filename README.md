@@ -1059,7 +1059,7 @@ VALUES (999999, CURRENT_DATE, 800, 40, 1, 99999, 1);
 | פרוצדורות | [`stage4/procedure.sql`](./stage4/procedure.sql) |
 | טריגרים | [`stage4/triggers.sql`](./stage4/triggers.sql) |
 | תוכניות ראשיות | [`stage4/main.sql`](./stage4/main.sql) |
-| גיבוי מעודכן | [`stage4/backup4`](./stage4/backup4) |
+| גיבוי מעודכן | [`stage5/final`](./stage5/final) |
 | דוח (קובץ זה) | [`README.md`](./README.md) |
 
 **TAG ב-Git:** יש ליצור tag לשלב ד' לפי הוראות הקורס.
@@ -1344,7 +1344,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-בהרצה ראשונה המערכת בונה images, מרימה PostgreSQL 17, משחזרת את הגיבוי `stage4/backup4`, ומפעילה API + ממשק Web. **המתיני 1–2 דקות** עד שהכל עולה.
+בהרצה ראשונה המערכת בונה images, מרימה PostgreSQL 17, משחזרת אוטומטית את הגיבוי `stage5/final` (אין צורך ב-restore ידני), ומפעילה API + ממשק Web. **המתיני 1–2 דקות** עד שהכל עולה.
 
 ### שלב 3 — פתיחה ובדיקה
 
@@ -1376,7 +1376,7 @@ docker compose up --build
 
 | שירות | תפקיד | פורט |
 |--------|--------|------|
-| `db` | PostgreSQL 17 + שחזור `stage4/backup4` | פנימי |
+| `db` | PostgreSQL 17 + שחזור `stage5/final` | פנימי |
 | `api` | שרת Express (`stage5/server`) | 3001 |
 | `web` | ממשק React (`stage5`) | 3000 |
 | `pgadmin` | ניהול DB | 8080 |

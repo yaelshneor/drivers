@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD_SECRET}
       POSTGRES_DB: ${DB_NAME_SECRET}
     volumes:
-      - ./stage4/backup4:/backup/backup4:ro
+      - ./stage5/final:/backup/final:ro
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
