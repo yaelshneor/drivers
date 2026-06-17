@@ -1381,25 +1381,4 @@ docker compose up --build
 | `web` | ממשק React (`stage5`) | 3000 |
 | `pgadmin` | ניהול DB | 8080 |
 
-### פתרון בעיות נפוצות
 
-| בעיה | פתרון |
-|------|--------|
-| פורט 3000 / 3001 תפוס | `docker compose down` — ודאי שאין `npm run dev` מקומי |
-| `database: disconnected` | המתיני ~30 שניות; `docker compose logs db` |
-| DB ריק / שגיאת restore | `docker compose down -v` ואז `docker compose up --build` |
-| שגיאת overwrite ב-`.env` | ענו `N` — `.env` קיים מספיק |
-
-### הרצה מקומית לפיתוח (לא נדרש להגשה)
-
-Docker מרים רק DB, והאפליקציה רצה עם Node.js:
-
-```powershell
-docker compose up -d db pgadmin
-cd stage5
-npm install
-npm run dev:server   # טרמינל 1 — :3001
-npm run dev          # טרמינל 2 — :3000
-```
-
-אם מותקן PostgreSQL מקומי על פורט 5432 — הוסיפי `DB_PORT=5433` ל-`.env`.
